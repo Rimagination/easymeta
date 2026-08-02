@@ -1,0 +1,1 @@
+appraisal_id,review_id,question_id,product_type,tool_id,tool_version,model_id,target_selection_rule,target_selection_deviation,deviation_rationale,documents_examined,item_id,judgment,support_locator,not_reported_does_not_prove_not_done,aggregation_forbidden,assessor,assessed_at,notes

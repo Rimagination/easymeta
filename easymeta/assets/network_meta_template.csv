@@ -1,0 +1,8 @@
+schema_version,data_stage,effect_id,study,treatment_a,treatment_b,yi,vi,analysis_scale,outcome_label,source_locator
+1.0.0,specialist_input,N001_AB,N001,A,B,-0.18,0.040,log,primary_outcome,Table 2
+1.0.0,specialist_input,N002_AC,N002,A,C,-0.31,0.050,log,primary_outcome,Table 2
+1.0.0,specialist_input,N003_BC,N003,B,C,-0.12,0.045,log,primary_outcome,Table 3
+1.0.0,specialist_input,N004_AB,N004,A,B,-0.20,0.042,log,primary_outcome,Table 2
+1.0.0,specialist_input,N004_AC,N004,A,C,-0.33,0.052,log,primary_outcome,Table 2
+1.0.0,specialist_input,N005_AB,N005,A,B,-0.16,0.038,log,primary_outcome,Table 2
+1.0.0,specialist_input,N006_AC,N006,A,C,-0.28,0.047,log,primary_outcome,Table 2

@@ -1,0 +1,4 @@
+object_type,object_id,checked_at,status,source,disposition,sensitivity_analysis,notes
+paper,REPORT-001,2026-08-02,clear,publisher page and bibliographic index,not_applicable,not_applicable,Replace this example row and record the exact checked source
+data,DATASET-001,2026-08-02,clear,repository landing page and version record,not_applicable,not_applicable,Record DOI URL or repository identifier where available
+code,CODE-001,2026-08-02,clear,release page and commit record,not_applicable,not_applicable,Record release tag commit and access date where available

@@ -1,0 +1,3 @@
+output_file,output_field,source_fields,transform,formula_or_code,notes
+analysis.csv,effect_id,curated.csv:effect_id,identity,analysis.effect_id = curated.effect_id,Replace this example with the real output and source field
+analysis.csv,yi,curated.csv:effect_estimate;curated.csv:effect_scale,conditional log transform,yi = log(effect_estimate) when effect_scale == 'natural',Record all assumptions and code locations

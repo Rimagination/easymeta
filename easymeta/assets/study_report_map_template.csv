@@ -1,0 +1,1 @@
+schema_version,study_id,report_id,report_role,is_primary_report,source_type,source_locator,mapping_evidence,multi_study_reason,overlap_status,overlap_with_report_ids,overlap_evidence,overlap_resolution,reviewer_1,reviewer_2,adjudicator,decision_date,notes

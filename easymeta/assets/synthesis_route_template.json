@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.2",
+  "pooling": {
+    "eligible": true,
+    "ineligibility_reason": null
+  },
+  "data": {
+    "level": "aggregate",
+    "effect_structure": "independent",
+    "dependence_topology": "independent",
+    "dependency_sources": [],
+    "sampling_covariance_status": "not_needed_verified",
+    "sampling_v_path": null,
+    "ecology_contract_path": null
+  },
+  "specialist_triggers": {
+    "network": false,
+    "diagnostic": false,
+    "dose_response": false,
+    "ipd": false,
+    "one_stage_longitudinal": false,
+    "spatiotemporal": false,
+    "phylogenetic": false,
+    "raw_community_matrix": false,
+    "community_composition": false,
+    "multidimensional_biodiversity": false,
+    "variability_effect": false,
+    "factorial_interaction": false,
+    "ecosystem_multifunctionality": false,
+    "derived_recovery_stability": false,
+    "second_order_meta": false,
+    "custom_effect_model": false,
+    "life_cycle_assessment": false,
+    "latent_class_analysis": false
+  }
+}

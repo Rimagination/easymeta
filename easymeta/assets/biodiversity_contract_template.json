@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "REPLACE_WITH_STABLE_CONTRACT_ID",
+  "route_type": "alpha_diversity",
+  "outcome": {
+    "outcome_id": "REPLACE_WITH_OUTCOME_ID",
+    "name": "REPLACE_WITH_OUTCOME_NAME",
+    "estimand": "REPLACE_WITH_MATHEMATICAL_OR_OPERATIONAL_ESTIMAND",
+    "zero_effect": "REPLACE_WITH_ZERO_EFFECT",
+    "direction": "REPLACE_WITH_DIRECTION",
+    "unit": "REPLACE_WITH_UNIT_OR_DIMENSIONLESS",
+    "diversity_component": "alpha",
+    "diversity_dimension": "taxonomic",
+    "measure_family": "effective_diversity",
+    "metric_name": "Hill number",
+    "hill_q": 1,
+    "input_data_type": "abundance",
+    "reported_form": "effective_diversity",
+    "analysis_form": "effective_diversity",
+    "entropy_log_base": null,
+    "observed_or_estimated": "observed",
+    "composition_type": "not_applicable"
+  },
+  "scale_and_completeness": {
+    "grain_area": 1.0,
+    "grain_unit": "m2",
+    "spatial_extent": 100.0,
+    "extent_unit": "m2",
+    "n_sampling_units": 10,
+    "sampling_effort_definition": "REPLACE_WITH_EFFORT_DEFINITION",
+    "standardization_method": "coverage",
+    "observed_coverage": 0.9,
+    "target_coverage": 0.8,
+    "species_density_or_total_richness": "not_applicable"
+  },
+  "dependence": {
+    "independent_unit": "REPLACE_WITH_INDEPENDENT_UNIT",
+    "dependency_sources": [],
+    "sampling_covariance_status": "not_needed_verified",
+    "sampling_v_path": null,
+    "true_effect_structure": ["study", "effect"],
+    "coefficient_inference": "REPLACE_WITH_MODEL_BASED_OR_CR2_PLAN",
+    "prediction_target": "REPLACE_WITH_NEW_STUDY_OR_OTHER_TARGET"
+  },
+  "multifunctionality": {
+    "applicable": false,
+    "function_registry_path": null,
+    "construction": null,
+    "hill_q": null,
+    "thresholds": [],
+    "weights_declared": false,
+    "function_set_sensitivity": false
+  },
+  "factorial_interaction": {
+    "applicable": false,
+    "interaction_scale": null,
+    "cell_order": [],
+    "contrast_coefficients": [],
+    "cell_statistics_path": null,
+    "cell_covariance_status": null,
+    "cell_covariance_path": null,
+    "nonlinearity_and_confounding_check": null
+  },
+  "recovery": {
+    "applicable": false,
+    "comparator_type": null,
+    "reference_model_source": null,
+    "target_dimensions": [],
+    "n_timepoints": null,
+    "time_covariance_status": null,
+    "persistence_window": null
+  },
+  "provenance": {
+    "source_locator": "REPLACE_WITH_PAGE_TABLE_FIGURE_OR_DATA_COLUMNS",
+    "formula_or_code_path": "REPLACE_WITH_FORMULA_OR_CODE_PATH",
+    "assumption_set_id": "REPLACE_WITH_ASSUMPTION_SET_ID",
+    "reviewer": "REPLACE_WITH_REVIEWER",
+    "verification_status": "verified"
+  }
+}

@@ -1,0 +1,9 @@
+schema_version,data_stage,study_id,threshold_id,tp,fp,fn,tn,outcome_label,source_locator,notes
+1.0.0,specialist_input,D001,T1,48,12,7,53,target_condition,Table 2,no zero cells
+1.0.0,specialist_input,D002,T1,35,9,10,46,target_condition,Table 2,
+1.0.0,specialist_input,D003,T1,61,18,13,72,target_condition,Table 3,
+1.0.0,specialist_input,D004,T1,42,7,8,39,target_condition,Table 2,
+1.0.0,specialist_input,D005,T1,27,14,0,44,target_condition,Table 4,zero FN requires declared strategy
+1.0.0,specialist_input,D006,T1,54,20,16,60,target_condition,Table 3,
+1.0.0,specialist_input,D007,T1,31,5,9,45,target_condition,Table 2,
+1.0.0,specialist_input,D008,T1,70,22,18,81,target_condition,Table 5,

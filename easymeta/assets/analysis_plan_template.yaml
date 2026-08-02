@@ -1,0 +1,535 @@
+schema_version: "1.2"
+template_status: working_template_not_official
+migration_note: "v1.2 adds route schema 1.2, biodiversity contracts, CEESAT 2.2/MATES target selection, and per-system-stage AI validation. Preserve frozen v1.1 plans and record migration as a protocol change."
+
+review:
+  title: ""
+  short_name: ""
+  review_type: systematic_review  # systematic_review | systematic_map | rapid_review | other
+  domain: medical_ecology
+  decision_context: ""
+  lead_contact: ""
+
+question:
+  framework: PECO  # PICO | PECO | PCC | PO | PIT | other
+  population: ""
+  intervention_or_exposure: ""
+  comparator: ""
+  context: ""
+  primary_question: ""
+  outcomes:
+    - outcome_id: ""
+      name: ""
+      definition: ""
+      priority: primary  # primary | secondary | adverse
+      timepoint_or_window: ""
+      preferred_effect_measure: ""
+      direction: ""
+      unit: ""
+      ecology_outcome_identity:
+        contract_path: ""  # copy assets/biodiversity_contract_template.json and validate it
+        diversity_component: ""  # alpha | beta | gamma | composition | not_applicable
+        diversity_dimension: ""  # taxonomic | phylogenetic | functional | genetic | not_applicable
+        measure_family: ""
+        hill_q: null
+        grain_area: null
+        spatial_extent: null
+        n_sampling_units: null
+        observed_or_estimated: ""
+        sampling_coverage: null
+
+synthesis_route:
+  schema_version: "1.2"
+  input_template_path: assets/synthesis_route_template.json
+  completed_plan_path: ""
+  router_path: scripts/route_synthesis.py
+  route_output_path: ""
+  selected_route: ""  # aggregate_effect_meta | dependent_effect_meta | specialist_route | no_pooling
+  runner_allowed: null
+  stop_reason: ""
+  required_handoff: []
+  ecology_specialist_trigger_review:
+    raw_community_matrix: false
+    community_composition: false
+    multidimensional_biodiversity: false
+    variability_effect: false
+    factorial_interaction: false
+    ecosystem_multifunctionality: false
+    one_stage_longitudinal: false
+    derived_recovery_stability: false
+    second_order_meta: false
+  dependence_gate:
+    data_level: aggregate  # aggregate | ipd | raw_community_matrix | meta_level
+    effect_structure: independent
+    dependence_topology: independent  # independent | nested | one_way | crossed | mixed | unknown
+    dependency_sources: []
+    sampling_covariance_status: not_needed_verified
+    sampling_v_path: null
+    ecology_contract_path: null
+    dependence_graph_path: ""
+    sampling_error_structure: ""
+    true_effect_structure: []
+    coefficient_inference: ""
+
+governance:
+  protocol:
+    registry: ""
+    identifier: ""
+    public_url: ""
+    version: ""
+    registered_at: ""  # YYYY-MM-DD
+    analysis_plan_frozen_at: ""
+  roles:
+    information_specialist: []
+    screeners: []
+    extractors: []
+    adjudicators: []
+    statisticians: []
+    domain_experts: []
+    data_steward: ""
+    final_accountable_reviewer: ""
+  conflicts_of_interest: []
+  stakeholder_involvement: []
+  deviations:
+    log_path: ""
+    rule: "Record date, protocol clause, planned and actual method, reason, result awareness, and impact."
+
+eligibility:
+  population: ""
+  intervention_or_exposure: ""
+  comparator: ""
+  outcomes: ""
+  study_designs: []
+  settings: []
+  dates: ""
+  languages: []
+  publication_status: ""
+  exclusion_priority_order: []
+  edge_case_rules: []
+
+search:
+  information_specialist_involved: true
+  planned_start_date: ""
+  last_search_date: ""
+  update_search_due: ""
+  known_item_test_set_path: ""
+  known_item_recall_target: 1.0
+  databases:
+    - name: ""
+      platform: ""
+      coverage: ""
+      exact_query_path: ""
+      searched_at: ""
+      hits: null
+      export_path: ""
+  registers: []
+  grey_literature_sources: []
+  citation_searching: ""
+  language_strategy: ""
+  peer_review:
+    method: ""
+    reviewer: ""
+    completed_at: ""
+  limits_and_justification: []
+  stopping_rule: ""
+
+deduplication:
+  raw_exports_immutable: true
+  software_and_version: ""
+  exact_keys: [doi, registry_id, database_accession]
+  normalized_keys: [title, first_author, publication_year, volume, first_page]
+  fuzzy_method: ""
+  threshold: null
+  manual_review_rule: ""
+  validation_sample: ""
+  false_merge_result: ""
+  missed_duplicate_result: ""
+  audit_log_path: ""
+  study_report_linkage_path: ""
+
+study_identity:
+  template_path: assets/study_report_map_template.csv
+  map_path: ""
+  validator_path: scripts/validate_study_map.py
+  unresolved_overlap_blocks_synthesis: true
+  split_or_merge_decision_log: ""
+
+screening:
+  manual_path: ""
+  calibration_sample_size: null
+  calibration_acceptance_rule: ""
+  title_abstract_reviewers: 2
+  full_text_reviewers: 2
+  independence_preserved: true
+  conflict_resolution: consensus_then_third_reviewer
+  full_text_primary_reason_required: true
+  unavailable_full_text_rule: ""
+  retraction_and_correction_check: ""
+  decisions_path: ""
+
+publication_integrity:
+  template_path: assets/publication_integrity_template.csv
+  ledger_path: ""
+  validator_path: scripts/validate_integrity.py
+  required_object_types: [paper, data, code]
+  unchecked_or_undisposed_hit_blocks_synthesis: true
+  validation_output_path: ""
+
+extraction:
+  raw_schema_version: "1.0.0"
+  analysis_effect_schema_version: "1.0.0"
+  template_path: assets/extraction_template.csv
+  raw_data_stage: raw_extraction
+  raw_data_path: ""
+  analysis_effect_template_path: assets/analysis_effects_template.csv
+  analysis_effect_data_stage: analysis_effect
+  analysis_effect_path: ""
+  validator_path: scripts/validate_extraction.py
+  pilot_studies: []
+  extraction_mode: independent_duplicate
+  outcome_data_reviewers: 2
+  conflict_resolution: consensus_then_adjudication
+  source_locator_required: true
+  multiple_report_priority_rule: ""
+  author_contact_rule: ""
+  adjusted_estimate_priority: ""
+  missing_data_rule: ""
+  conversions:
+    - conversion_id: ""
+      source_format: ""
+      target_format: ""
+      formula_or_code_path: ""
+      assumptions: ""
+  validator_warning_disposition_path: ""
+  duplicate_reconciliation:
+    reviewer_1_path: ""
+    reviewer_2_path: ""
+    reconciler_path: scripts/reconcile_extractions.py
+    differences_path: ""
+    adjudication_template_path: assets/extraction_adjudication_template.csv
+    adjudication_path: ""
+    auto_adjudication_forbidden: true
+  complex_designs:
+    calculator_path: scripts/calculate_complex_effects.R
+    input_template_path: assets/complex_effect_input_template.csv
+    design_routes: []  # paired_crossover_md | two_group_change_md | baci_additive_md | cluster_adjusted_generic
+    assumption_sets: []
+    correlation_sources: []
+    carryover_rule: ""
+    cluster_rule: "Use a reported design-adjusted estimate; effective sample size alone cannot create one."
+  ecology_specialist_inputs:
+    community_matrix_path: ""
+    taxonomy_or_phylogeny_path: ""
+    sampling_effort_and_coverage_path: ""
+    diversity_dimensions: []  # taxonomic | functional | phylogenetic
+    diversity_components: []  # alpha | beta | gamma
+    hill_orders: []  # e.g. 0, 1, 2; freeze before looking at results
+    factorial_cell_statistics_path: ""
+    repeated_measure_structure_path: ""
+    multifunctionality_function_registry_path: ""
+    derived_estimand_assumption_ledger_path: ""
+    second_order_meta_source_map_path: ""
+
+critical_appraisal:
+  tools_by_design: {}
+  reviewers: 2
+  independent: true
+  support_locator_required: true
+  conflict_resolution: ""
+  synthesis_use: ""  # e.g. stratification, sensitivity analysis; avoid unplanned score cutoffs
+  ecology_specific_checks:
+    spatial_pseudoreplication: true
+    temporal_pseudoreplication: true
+    detection_probability: true
+    site_selection_and_environmental_confounding: true
+  environmental_appraisal_plan:
+    validity_construct: ""
+    eligible_designs: []
+    bias_mechanism_map: ""
+    selected_tool_and_version: ""
+    feat_focused: ""
+    feat_extensive: ""
+    planned_synthesis_use: ""
+    transparency_records: ""
+    modifications: []
+    modification_license_basis: ""
+    expert_review: ""
+    pilot_result: ""
+  risk_of_bias_template_path: assets/risk_of_bias_template.csv
+  risk_of_bias_ledger_path: ""
+  certainty_template_path: assets/certainty_template.csv
+  certainty_ledger_path: ""
+  validator_path: scripts/validate_appraisal.py
+  automated_scoring_forbidden: true
+
+synthesis:
+  synthesis_eligibility_rule: ""
+  unit_of_analysis: study
+  effect_direction_harmonization: ""
+  unit_harmonization: ""
+  multiple_effects:
+    primary_strategy: ""  # selection | aggregation | multilevel | multivariate | robust_variance | other
+    dependency_cluster_field: dependency_cluster
+    independent_cluster_field: ""  # required by run_meta_analysis.R; usually study_id or an independent sampling-unit ID
+    topology: ""  # independent | nested | one_way | crossed | mixed | unknown
+    sampling_error_sources: []
+    true_effect_levels: []
+    crossed_factors: []
+    unresolved_dependencies: []
+    shared_control_rule: ""
+    sampling_v_builder_path: scripts/build_sampling_v.R
+    sampling_v_scenarios: []  # record rho/phi, design fields, output matrix, and manifest for each scenario
+    sensitivity_strategy: ""
+  primary_model:
+    effect_measure: ""
+    effect_scale: ""
+    model: random_effects  # fixed_effect | random_effects | multilevel | multivariate | other
+    estimator: ""
+    confidence_interval_method: ""
+    weighting: ""
+    software_and_version: ""
+    formula_or_call: ""
+  heterogeneity:
+    statistical_metrics: []
+    average_sampling_variance_definition: ""
+    variance_components_to_report: []
+    total_and_component_i2: true
+    raw_scale_heterogeneity: ""
+    clinical_or_ecological_assessment: ""
+    prediction:
+      requested: false
+      target: ""
+      moderator_values_source: ""
+      included_variance_components: []
+      excluded_variance_components: []
+  moderators:
+    prespecified: []
+    minimum_information_rule: ""
+    interaction_tests_required: true
+  sensitivity_analyses: []
+  missing_data_sensitivity: ""
+  small_study_or_publication_bias:
+    missing_evidence_mechanisms:
+      unpublished_studies: ""
+      selective_outcome_reporting: ""
+      time_lag: ""
+      language_database_taxonomic_and_availability_bias: ""
+      protocol_registry_and_author_contact_checks: ""
+    statistical_small_study_effect:
+      methods: []
+      precision_variable_and_mechanical_correlation_check: ""
+      main_model_dependence_and_moderators_preserved: true
+      independent_cluster_count: null
+      effective_df_and_leverage_rule: ""
+      alternative_explanations: ""
+      specialist_handoff_if_multilevel_method_not_implemented: true
+    binary_publication_bias_verdict_forbidden: true
+  narrative_synthesis_plan: ""
+  exploratory_analysis_label: exploratory
+  specialist_models:
+    diagnostic:
+      runner_path: scripts/run_diagnostic_meta.R
+      supported_scope: one_threshold_per_study_bivariate_logit
+      input_template_path: assets/diagnostic_meta_template.csv
+    dose_response:
+      runner_path: scripts/run_dose_response.R
+      supported_scope: two_stage_linear_gls_with_explicit_v
+      input_template_path: assets/dose_response_template.csv
+    network:
+      runner_path: scripts/run_network_meta.R
+      supported_scope: connected_contrast_consistency_model_no_ranking
+      input_template_path: assets/network_meta_template.csv
+    ecoevo_structured:
+      runner_path: scripts/run_ecoevo_meta_analysis.R
+      matrix_validator_path: scripts/validate_structure_matrix.py
+      model_spec_template_path: assets/ecoevo_model_spec_template.json
+      implemented_scope: phylogenetic_correlation_only
+      validation_only_scopes: [spatial, temporal]
+    plant_biodiversity_routes:
+      guidance_path: references/plant-biodiversity-specialist-routes.md
+      benchmark_casebook_path: references/plant-biodiversity-benchmark-casebook.md
+      ordinary_runner_blocked_scopes:
+        - raw_community_matrix
+        - multidimensional_biodiversity
+        - variability_effect
+        - factorial_interaction
+        - ecosystem_multifunctionality
+        - one_stage_longitudinal
+        - derived_recovery_stability
+        - second_order_meta
+      shared_control_scope: "May use dependent_effect_meta only when effect IDs, an audited sampling V, independent clusters, and the random-effects structure are explicit."
+    unsupported_or_nonidentifiable_rule: "Stop, preserve the failed plan, and obtain specialist review; do not fall back silently to an ordinary model."
+
+reporting:
+  guidance_manifest_template_path: assets/guidance_manifest_template.csv
+  guidance_manifest_path: ""
+  conduct_sources:
+    - source_id: ""
+      version: ""
+      checked_at: ""
+  reporting_frameworks:
+    - source_id: ""
+      form_type: ""  # systematic_review_protocol | systematic_review_report | systematic_map_protocol | systematic_map_report | checklist
+      completed_file: ""
+      page_mapping_file: ""
+  journal_requirements: []
+  flow_diagram: ""
+  full_text_exclusions: ""
+  study_report_map: ""
+  individual_effects_table: ""
+  protocol_deviations_reported: true
+  data_availability_statement: ""
+  code_availability_statement: ""
+  ai_disclosure_location: ""
+  environmental_review_audit:
+    ceesat:
+      applicable: false
+      tool_id: CEESAT
+      version: "2.2"
+      tool_variant: evidence_review  # evidence_review | evidence_overview
+      review_question_ids: []
+      documents_examined: []
+      completed_ledger_path: ""
+    mates:
+      applicable: false
+      tool_id: MATES
+      citation_year: 2026
+      tool_version: ""
+      app_version: ""
+      repository_commit: ""
+      target_model_id: ""  # exactly one target analysis
+      selection_rule: first_meta_analysis_in_paper
+      selection_locator: ""
+      standard_deviation: false
+      deviation_rationale: ""
+      completed_ledger_path: ""
+    layer_separation_confirmed: false  # study RoB, body certainty, conduct appraisal, reporting completeness
+
+reproducibility:
+  repository_url: ""
+  commit_or_snapshot: ""
+  input_manifest_path: ""
+  file_hash_algorithm: sha256
+  environment_lock_path: ""
+  runtime_versions: {}
+  package_versions_path: ""
+  locale: ""
+  timezone: ""
+  random_seeds: {}
+  entry_command: ""
+  run_log_path: ""
+  output_manifest_path: ""
+  field_lineage_template_path: assets/field_lineage_template.csv
+  field_lineage_path: ""
+  lineage_builder_path: scripts/build_lineage_manifest.py
+  lineage_manifest_path: ""
+  restricted_materials_access: ""
+
+ai_use:
+  enabled: false
+  instance_policy: "Create one systems entry per AI system-workflow-stage pair; reuse ai_system_id across stages and assign a unique ai_stage_run_id. Validation is not transferable across stages."
+  policy:
+    human_accountability_retained: true
+    ai_never_cited_as_primary_source: true
+    judgment_outputs_require_human_review: true
+    prohibited_inputs: []
+  systems:
+    - ai_system_id: ""
+      ai_stage_run_id: ""
+      status: planned  # planned | used | discontinued
+      guidance:
+        guidance_source_id: CEE-AI-LIVING
+        guidance_checked_at: ""
+        section_last_updated: ""
+        snapshot_hash: ""
+      identity:
+        tool_name: ""
+        model_or_system_version: ""
+        developer: ""
+        provider: ""
+        access_date: ""
+        interface: ""  # API | web | local | plugin
+        service_tier: ""
+      use:
+        workflow_stage: ""  # planning/search/deduplication/screening/appraisal/extraction/synthesis/reporting
+        purpose: ""
+        where_how_why: ""
+        automation_mode: assistive  # assistive | semi_automated | automated
+        justification: ""
+        external_validation_references: []
+      customization:
+        training_or_fine_tuning: ""
+        retrieval_sources: []
+        parameters: {}
+        thresholds: {}
+        pre_and_post_processing: ""
+        code_or_script_paths: []
+      prompts:
+        - prompt_id: ""
+          system_prompt_exact: |-
+            REPLACE WITH THE EXACT SYSTEM PROMPT OR A CONTROLLED-ACCESS LOCATOR.
+          user_prompt_exact: |-
+            REPLACE WITH THE EXACT USER PROMPT/TEMPLATE, INCLUDING PLACEHOLDERS.
+          few_shot_examples_location: ""
+          wording_and_structure_rationale: ""
+          input_manifest_or_hash: ""
+          raw_output_location: ""
+          prompt_restriction_reason: ""
+      protocol_alignment:
+        protocol_plan: ""
+        actual_use: ""
+        deviation: false
+        deviation_reason_and_impact: ""
+      validation:
+        context_specific_validation_done: false
+        validation_reason_or_no_validation_reason: ""
+        gold_standard_creator: ""
+        sample_selection: ""
+        sample_size: null
+        held_out_from_tuning: true
+        metrics: {}
+        acceptance_thresholds: {}
+        results: {}
+        decision: ""  # pass | restricted | fail
+        approved_scope: ""
+        fallback_action: ""
+        human_ai_agreement: ""
+        error_and_misclassification_types: []
+        revalidation_triggers: []
+        validation_artifact_paths: []
+      human_oversight:
+        reviewers: []
+        review_scope: ""
+        sampling_rule: ""
+        escalation_rule: ""
+        disagreement_resolution: ""
+        final_decision_holder: ""
+      limitations_bias_and_corrections:
+        known_limitations: []
+        potential_biases: []
+        mitigations: []
+        errors_detected: []
+        corrections_and_workflow_changes: []
+        residual_risk: ""
+      privacy_legal_and_integrity:
+        data_classification: ""
+        personal_or_sensitive_data: false
+        confidential_or_unpublished_material: false
+        licensed_full_text_or_restricted_content: false
+        data_sent_to_third_party: ""
+        hosting_region_and_jurisdiction: ""
+        retention_and_deletion: ""
+        provider_training_setting: ""
+        access_controls: ""
+        ethics_or_legal_basis: ""
+        provenance_plagiarism_copyright_ip_review: ""
+        privacy_risk_and_mitigation: ""
+      funding_and_conflicts:
+        funding_related_to_system: ""
+        financial_interests: ""
+        developer_or_provider_affiliations: ""
+        other_conflicts: ""
+      reporting:
+        methods_text_location: ""
+        supplementary_materials: []
+        code_and_prompts_available_at: ""

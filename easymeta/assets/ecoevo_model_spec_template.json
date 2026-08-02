@@ -1,0 +1,38 @@
+{
+  "schema_version": "1.1.0",
+  "structure_type": "phylogenetic",
+  "input_csv": "analysis_effects.csv",
+  "output_dir": "ecoevo_phylogenetic_output",
+  "analysis_scale": "log",
+  "columns": {
+    "effect_id": "effect_id",
+    "study_id": "study_id",
+    "species_id": "species_id",
+    "yi": "yi",
+    "vi": "vi"
+  },
+  "phylogeny": {
+    "correlation_matrix": "phylogenetic_correlation.csv",
+    "source": "REPLACE_WITH_TREE_OR_MATRIX_SOURCE",
+    "version": "REPLACE_WITH_FROZEN_VERSION_OR_HASH",
+    "branch_length_method": "REPLACE_WITH_BRANCH_LENGTH_METHOD",
+    "pruning_rule": "REPLACE_WITH_TAXON_MATCHING_AND_PRUNING_RULE"
+  },
+  "sampling_v_matrix": null,
+  "moderators": "~ 1",
+  "method": "REML",
+  "test": "t",
+  "dfs": "contain",
+  "level": 95,
+  "model_role": "primary",
+  "species_iid_exception_reason": null,
+  "random_effects": {
+    "study": true,
+    "phylogenetic_species": true,
+    "species_iid": true,
+    "effect": true
+  },
+  "hessian_policy": "require_positive_definite",
+  "variance_boundary_tolerance": 1e-08,
+  "overwrite": false
+}

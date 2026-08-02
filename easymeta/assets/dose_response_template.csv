@@ -1,0 +1,7 @@
+schema_version,data_stage,effect_id,study,dose_difference,yi,dose_unit,analysis_scale,outcome_label,source_locator
+1.0.0,specialist_input,DR001_10,DR001,10,0.20,mg_per_day,log,adverse_event,Table 2
+1.0.0,specialist_input,DR001_20,DR001,20,0.40,mg_per_day,log,adverse_event,Table 2
+1.0.0,specialist_input,DR002_10,DR002,10,0.15,mg_per_day,log,adverse_event,Table 3
+1.0.0,specialist_input,DR002_20,DR002,20,0.31,mg_per_day,log,adverse_event,Table 3
+1.0.0,specialist_input,DR003_10,DR003,10,0.25,mg_per_day,log,adverse_event,Table 2
+1.0.0,specialist_input,DR003_20,DR003,20,0.48,mg_per_day,log,adverse_event,Table 2

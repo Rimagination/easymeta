@@ -1,0 +1,24 @@
+{
+  "tolerance": 1e-7,
+  "common_rr": {
+    "estimate": -0.142262452505435,
+    "display_estimate": 0.867393576992215
+  },
+  "random_rr": {
+    "estimate": -0.138919532363813,
+    "display_estimate": 0.870298056468102,
+    "display_pi_lower": 0.609614512521582,
+    "display_pi_upper": 1.24245517705804,
+    "leave_one_cluster_rows": 6
+  },
+  "multilevel_cr2": {
+    "estimate": -0.109107609101997,
+    "display_estimate": 0.896633926335032,
+    "independent_clusters": 4,
+    "effect_rows_per_cluster": 2
+  },
+  "common_proportion": {
+    "estimate": -1.07687753965824,
+    "display_estimate": 0.254097367957173
+  }
+}
