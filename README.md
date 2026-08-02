@@ -1,4 +1,6 @@
 <div align="center">
+  <img src="./assets/easymeta-hero-handdrawn-white.png" alt="EasyMeta hand-drawn meta-analysis workflow hero" width="1200" />
+
   <h1>EasyMeta</h1>
 
   <a href="./easymeta/SKILL.md"><img alt="Skill: EasyMeta" src="https://img.shields.io/badge/SKILL-EasyMeta-2563EB?style=flat-square" /></a>
