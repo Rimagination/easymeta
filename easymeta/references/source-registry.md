@@ -26,6 +26,7 @@
 | `AI-POSITION-2025` | [Position statement on AI use across Cochrane, Campbell, JBI and CEE (2025)](https://doi.org/10.1186/s13750-025-00374-5) | 人类最终责任、方法严谨性、判断性 AI 的透明报告 | 每年及上述组织发布替代立场时复查 | 开放论文仍以概括和短引为主；保留 DOI 与版本 |
 | `PRISMA-2020` | [PRISMA 2020 statement、清单与扩展清单](https://www.prisma-statement.org/prisma-2020)；[流程图](https://www.prisma-statement.org/prisma-2020-flow-diagram) | 健康及一般系统综述的完整报告、流程计数和公开材料 | 每个报告启动与投稿前检查官网；至少每年复查扩展与勘误 | 官方清单/流程图标明 CC BY 4.0；复用时署名并指明是否改编。本技能只蒸馏，不冒充官方清单 |
 | `PRISMA-S-2021` | [PRISMA-S: literature-search reporting extension](https://www.prisma-statement.org/prisma-search) | 数据库/平台、逐字策略、日期、限制、补充检索与同行评审的报告 | 每次检索计划和投稿前；至少每年检查 FAQ/更新 | 引用官方页面和 DOI；不复制完整 16 项清单 |
+| `PRISMA-DTA-LIVING` | [PRISMA-DTA official extension page](https://www.prisma-statement.org/dta) | 诊断准确性系统综述的报告扩展与当前正式材料定位 | 每个 DTA 报告冻结与投稿前检查扩展页、勘误和替代状态 | 报告规范，不替代 Cochrane DTA conduct 手册或 QUADAS-3；只保存版本、定位和自有映射 |
 | `ROSES` | [ROSES reporting standards](https://www.roses-reporting.com/)；[forms](https://www.roses-reporting.com/forms) | 环境系统综述和系统地图的报告与流程图 | 环境项目协议和投稿前检查；每年复查 | 官方 forms 页面标示表单为 CC BY 4.0；复用时署名并标注改编，不把整个网站默认视为同一许可 |
 | `PRISMA-ECOEVO-1.0` | [PRISMA-EcoEvo official page](https://www.prisma-statement.org/ecoevo)；[O'Dea et al. 2021](https://doi.org/10.1111/brv.12721)；[OSF updates](https://doi.org/10.17605/OSF.IO/GB5VX) | 生态与进化系统综述和 Meta 分析的 27 项报告扩展 | 截至 2026-08-03 为 v1.0；投稿前检查官方页、OSF 与勘误 | 报告规范，不是 conduct、偏倚或 certainty 工具；保存实际清单版本和页码映射 |
 
@@ -34,6 +35,7 @@
 | ID | 官方来源与版本 | 本技能采用的范围 | 更新信号与复查频率 | 版权/蒸馏状态 |
 |---|---|---|---|---|
 | `COCHRANE-HB-6.5` | [Cochrane Handbook for Systematic Reviews of Interventions, v6.5 (2024)](https://www.cochrane.org/authors/handbooks-and-manuals/handbook/current)；重点 [Chapter 4](https://www.cochrane.org/authors/handbooks-and-manuals/handbook/current/chapter-04)、[Chapter 5](https://www.cochrane.org/authors/handbooks-and-manuals/handbook/current/chapter-05)、[Chapter 10](https://www.cochrane.org/authors/handbooks-and-manuals/handbook/current/chapter-10) | 检索/双人筛选、研究与报告区分、双人结局提取、效应量、依赖与荟萃分析 | `current` 页面可能换版；每个健康项目启动、模型定稿和投稿前检查，至少每年一次 | Cochrane 版权；记录章节和更新时间，转述方法，不复制长表、图或整章 |
+| `COCHRANE-DTA-HB-2.0` | [Cochrane Handbook for Systematic Reviews of Diagnostic Test Accuracy, v2.0 (2023)](https://www.cochrane.org/authors/handbooks-and-manuals/handbook-systematic-reviews-diagnostic-test-accuracy) | DTA 问题、2×2 数据、阈值、双变量/HSROC 综合与解释边界 | 每个 DTA 项目启动、分析锁定和投稿前核对版本；偏倚工具另查 QUADAS 当前页 | Cochrane 版权；仅蒸馏方法和章节导航，不复制整章或工具 |
 | `JBI-MANUAL-2024` | [JBI Manual for Evidence Synthesis 在线版](https://synthesismanual.jbi.global)；[2024 edition 公告](https://jbi.global/news/article/jbi-updates-methodological-guidance-0)；[2024 PDF](https://jbi-global-wiki.refined.site/download/attachments/355599504/JBI%20Manual%20for%20Evidence%20Synthesis%20Nov%202024.pdf?download=true) | 多类型健康证据综合；协议、两人独立评价/提取、争议解决、缺失与转换计划 | 在线章节可能先于 PDF 更新；每个项目选型与投稿前、每 6 个月检查在线手册和 “What’s New” | JBI 版权；只提炼流程，表格/评价工具从官方获取，不在技能中重印 |
 | `CEE-METHODS-5.1` | [CEE online methods sections](https://environmentalevidence.org/information-for-authors/guidelines-for-authors/) | 环境证据的检索测试集、灰色文献、筛选、数据编码、有效性评价、定量/叙述合成 | 与 `CEE-STD-5.1` 同步；章节页显示更新时立即复核相关模块 | 按页保存标题、URL、版本/更新时间和自有摘要；不镜像全文 |
 | `INTRO-META-2E` | [Borenstein, Hedges, Higgins & Rothstein, *Introduction to Meta-Analysis*, 2nd ed.](https://www.wiley-vch.de/en/areas-interest/mathematics-statistics/statistics-16st/biostatistics-16st3/introduction-to-meta-analysis-978-1-119-55835-4) | 通用效应量、异质性、模型选择、常见错误和发表偏倚的概念解释 | 新版或勘误发布时复查；不以本书替代领域规范 | 商业教材；仅保存书目信息、章节定位和自有摘要，不复制章节或习题 |
@@ -65,6 +67,12 @@
 | `CEESAT-2.1-SUPERSEDED` | [CEESAT v2.1, updated 21 Aug 2025](https://environmentalevidence.org/wp-content/uploads/2025/08/CEESAT2-Reviews-Version-2.1-updated-210825.pdf) | 仅用于复现按 v2.1 完成的历史评价 | 已由 `CEESAT-2.2` 取代；不得用于新评价；历史项目保留原工具和迁移决定 | 历史版本登记，不复制题项，不静默覆盖旧评价 |
 | `MATES-2026` | [Morrison et al. 2026](https://doi.org/10.1016/j.envint.2025.109935)；[repository](https://github.com/KyleMorrison99/MATES)；[Shiny app](https://kylemorrisonisshiny99.shinyapps.io/MATES_shiny/) | 环境 Meta 分析的 14 项报告完整性评价 | 论文、仓库和应用分别记录版本；默认评价论文中的第一个 Meta 分析；若改评其他模型，须预先定义客观选择规则并记录偏离 | 不评价 actual conduct、RoB、模型正确性或 certainty；复制题项前核实许可 |
 | `FEAT-2022` | [Frampton et al. 2022](https://doi.org/10.1186/s13750-022-00264-0) | 用 Focused、Extensive、Applied、Transparent 原则选择或设计环境研究 critical-appraisal 方法 | 新建/修改评价工具时复核；静态开放论文 | 框架而非固定量表；不生成质量总分；复用图表/题项前核对具体许可 |
+| `ROB2-LIVING` | [RoB 2 current-version page](https://www.riskofbias.info/welcome/rob-2-0-tool/current-version-of-rob-2) | 随机试验结果层面的偏倚评价及平行、整群、交叉变体路由 | 每个项目从 current page 获取对应变体并记录发布日期；不得只依赖旧 Excel 宏表 | 工具版权归开发组；不重印 signaling questions 或模板，只记录版本和判断依据 |
+| `ROBINS-I-LIVING` | [ROBINS-I official pages](https://www.riskofbias.info/welcome/home) | 非随机干预研究的结果层面偏倚评价 | 每个项目确认 2016 正式版与 V2 状态；draft 不得静默替代正式版 | 不重印工具；不同版本的评价不得无记录混用 |
+| `ROBINS-E-2024` | [ROBINS-E official page](https://www.riskofbias.info/welcome/robins-e-tool)；version 24 March 2024 | 非随机暴露效应研究偏倚，限工具声明的设计范围 | 每个暴露综述启动与评价前检查版本和设计适用性 | 不复制工具题项；病例对照、横断面等超出范围时另行路由 |
+| `QUADAS-3-LIVING` | [QUADAS-3 official page](https://www.bristol.ac.uk/population-health-sciences/projects/quadas/quadas-3/) | 诊断准确性研究的 RoB 与适用性 | 每个 DTA 项目下载并记录官网 current version；若 DTA 手册仍指向旧工具，明确采用当前工具的理由 | 不重印完整题项；保留版本、支持原文定位和人工判断 |
+| `GRADE-BOOK-LIVING` | [GRADE Book](https://book.gradepro.org/) | 关键结局层面的证据确定性、阈值、降级/升级与表达 | 每次 GRADE 前记录目标章节 last modified；新 Book 与旧 handbook 冲突时登记采用决定 | 只蒸馏原则，不复制整章或官方表格；GRADE 不生成研究质量总分 |
+| `JBI-APPRAISAL-LIVING` | [JBI Critical Appraisal Tools](https://jbi.global/critical-appraisal-tools) | JBI 覆盖的观察性、患病率及其他设计评价工具路由 | 每个项目从 current tools 页面选择并记录工具版本，不用 2024 手册附录替代更新版 | 工具从官方获取；本技能不重印清单或自动作出最终判断 |
 
 ### 2.4 应用压力测试来源
 
@@ -83,8 +91,15 @@
 | `PYTHON-CSV` | [Python Standard Library: csv](https://docs.python.org/3/library/csv.html) | `validate_extraction.py` 的 UTF-8 CSV 读取和字典行解析 | 修改校验器或升级 Python 次版本时；项目记录实际 `python --version` | PSF 官方文档；实现只依赖公开 API，不复制文档示例 |
 | `PYTHON-ARGPARSE` | [Python Standard Library: argparse](https://docs.python.org/3/library/argparse.html) | 命令行帮助、参数和用法错误处理 | 与 Python 运行时同步；修改 CLI 时复查 | 同上 |
 | `METAFOR-DOCS` | [metafor official documentation](https://wviechtb.github.io/metafor/) | R 中效应量计算、常规/多层模型、诊断和软件调用的候选实现 | 每次分析冻结前记录安装版本并查 NEWS/帮助页；升级包后重跑测试 | 软件文档只证明接口和默认值；方法合理性仍由手册、协议和统计审查决定 |
+| `CLUBSANDWICH-DOCS` | [clubSandwich official documentation](https://jepusto.github.io/clubSandwich/) | CR2/cluster-robust coefficient inference and small-sample degrees of freedom used with fitted Meta models | 每次 CR2 分析冻结前记录安装版本并查 NEWS/reference；升级包后重跑测试 | 软件文档只证明接口、校正和输出行为；不能修复错误效应量、错误聚类或错误均值模型 |
 
 软件条目是可选实现来源，不构成对单一软件的强制。项目若使用 RevMan、JBI SUMARI、CADIMA、其他 R/Python 包或 AI 平台，应按同一字段新增项目级登记：工具、开发者、版本、URL、访问日期、用途、默认值、许可证、更新信号和归档方式。
+
+### 2.6 P0-6 机器路由关系
+
+`assets/reference_routes.json` 是本登记的可执行子集：它只引用本页已登记的 `source_id`，并按产品、领域、阶段、决策点、数据层级、依赖来源和专项触发器选择最小必要集合。新增或改名 `source_id` 时，必须同时更新登记、机器路由和回归测试；机器路由中出现未登记 ID 或不存在的本地 reference 文件会使合同测试失败。
+
+`reference_receipt.json` 绑定 canonical plan SHA-256，并要求本地文件 SHA-256、实际章节定位、决策映射、版本、访问日、里程碑和采用决定。哈希只能证明字节一致，回执只能证明留下了声明；两者都不能证明阅读者理解正确，也不能代替对 living official page 的人工或联网核验。
 
 ## 3. 更新巡检程序
 

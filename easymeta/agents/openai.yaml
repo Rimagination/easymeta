@@ -1,4 +1,4 @@
 interface:
   display_name: "EasyMeta"
   short_description: "Rigorous meta-analysis for medicine and ecology"
-  default_prompt: "Use $easymeta to plan, analyze, and audit a reproducible medical, ecological, or biodiversity meta-analysis."
+  default_prompt: "Use $easymeta to plan, analyze, and audit a reproducible medical, ecological, or biodiversity meta-analysis. Route the minimum required references, create and validate the P0-6 reference receipt, and do not run analysis until the gate passes."

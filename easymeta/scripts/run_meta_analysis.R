@@ -12,8 +12,9 @@ help_text <- paste0(
   "Usage:\n",
   "  Rscript run_meta_analysis.R --input FILE --output-dir DIR --model TYPE\n",
   "    --yi-col COLUMN --vi-col COLUMN --independent-cluster-col COLUMN\n",
-  "    --analysis-scale SCALE --prediction yes|no [options]\n\n",
+  "    --analysis-scale SCALE --prediction yes|no --route-contract FILE [options]\n\n",
   "Required for every model:\n",
+  "  --route-contract FILE                 route_synthesis.py output with passed P0-6 gate\n",
   "  --model common|random|multilevel\n",
   "  --independent-cluster-col COLUMN     independent study/sampling-unit identifier\n",
   "  --analysis-scale identity|log|fisher-z|logit|arcsine|arcsine_difference|sqrt|sqrt_difference|analysis\n",
@@ -60,7 +61,7 @@ if (length(args) == 0L || "--help" %in% args) {
 }
 
 allowed_options <- c(
-  "input", "output-dir", "model", "yi-col", "vi-col", "analysis-scale", "prediction",
+  "input", "output-dir", "route-contract", "model", "yi-col", "vi-col", "analysis-scale", "prediction",
   "prediction-target", "prediction-components", "dependence-topology",
   "tau-method", "test", "mv-method", "random", "dfs", "moderators",
   "independent-cluster-col", "id-col", "v-matrix", "robust-cluster", "robust-method", "study-label-col",
@@ -144,6 +145,7 @@ split_codes <- function(value, allowed, label, uppercase = FALSE) {
 
 input_path <- normalizePath(require_opt("input"), winslash = "/", mustWork = FALSE)
 output_dir <- normalizePath(require_opt("output-dir"), winslash = "/", mustWork = FALSE)
+route_contract_path <- normalizePath(require_opt("route-contract"), winslash = "/", mustWork = FALSE)
 model_type <- parse_choice(tolower(require_opt("model")), c("common", "random", "multilevel"), "--model")
 yi_col <- require_opt("yi-col")
 vi_col <- require_opt("vi-col")
@@ -180,6 +182,39 @@ trimfill_requested <- parse_yes_no(get_opt("trimfill"), "--trimfill", default = 
 small_study_test <- parse_choice(tolower(get_opt("small-study-test", "none")),
                                  c("none", "egger", "rank"), "--small-study-test")
 
+if (!file.exists(route_contract_path)) abort(sprintf("Route contract does not exist: %s", route_contract_path))
+if (!requireNamespace("jsonlite", quietly = TRUE)) {
+  abort("Package 'jsonlite' is required to verify --route-contract. Install it outside this script, then rerun.")
+}
+route_contract <- tryCatch(
+  jsonlite::fromJSON(route_contract_path, simplifyVector = FALSE),
+  error = function(e) abort(sprintf("Could not parse route contract JSON '%s': %s", route_contract_path, conditionMessage(e)))
+)
+if (!is.list(route_contract)) abort("Route contract must be a JSON object.")
+if (!identical(route_contract$route, "aggregate_effect_meta") && !identical(route_contract$route, "dependent_effect_meta")) {
+  abort("Route contract does not select an ordinary aggregate/dependent effect route.")
+}
+if (!identical(route_contract$provisional_runner_allowed, TRUE)) {
+  abort("Route contract says the synthesis route is not provisionally executable.")
+}
+if (!identical(route_contract$runner_allowed, TRUE)) {
+  abort("Route contract has runner_allowed=false.")
+}
+if (!is.list(route_contract$reference_gate) || !identical(route_contract$reference_gate$status, "passed")) {
+  abort("Route contract P0-6 reference gate has not passed.")
+}
+if (!is.list(route_contract$reference_gate$issues) || length(route_contract$reference_gate$issues) != 0L) {
+  abort("Passed route contract must contain an empty reference_gate.issues array.")
+}
+route_plan_sha256 <- route_contract$reference_gate$plan_sha256
+if (!is.character(route_plan_sha256) || length(route_plan_sha256) != 1L ||
+    !grepl("^[0-9a-f]{64}$", route_plan_sha256)) {
+  abort("Route contract reference_gate.plan_sha256 must be 64 lowercase hexadecimal characters.")
+}
+if (!is.list(route_contract$required_references) || length(route_contract$required_references) == 0L ||
+    !is.list(route_contract$required_source_ids) || length(route_contract$required_source_ids) == 0L) {
+  abort("Route contract must retain non-empty required_references and required_source_ids arrays.")
+}
 if (!file.exists(input_path)) abort(sprintf("Input file does not exist: %s", input_path))
 if (file.exists(output_dir) && !dir.exists(output_dir)) abort("--output-dir points to a file, not a directory.")
 if (!dir.exists(output_dir) && !dir.exists(dirname(output_dir))) {
@@ -1039,6 +1074,7 @@ model_bundle <- list(
   base_model = model,
   inference_model = inference_model,
   configuration = opt,
+  route_contract = route_contract,
   analysis_scale = analysis_scale,
   independent_cluster_col = independent_cluster_col,
   independent_cluster_count = independent_cluster_count,
@@ -1056,6 +1092,10 @@ manifest <- c(
   "meta_analysis_manifest",
   sprintf("timestamp=%s", format(Sys.time(), tz = "UTC", usetz = TRUE)),
   sprintf("input=%s", input_path),
+  sprintf("route_contract=%s", route_contract_path),
+  sprintf("synthesis_route=%s", route_contract$route),
+  sprintf("reference_gate_status=%s", route_contract$reference_gate$status),
+  sprintf("route_plan_sha256=%s", route_plan_sha256),
   sprintf("output_dir=%s", output_dir),
   sprintf("model_type=%s", model_type),
   sprintf("rows_input=%d", nrow(original_dat)),

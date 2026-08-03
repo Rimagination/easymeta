@@ -2,14 +2,14 @@
 """Deterministically route an evidence-synthesis plan from strict JSON input.
 
 Usage:
-    python route_synthesis.py [INPUT.json|-] [--output FILE]
-        [--overwrite yes|no] [--pretty]
+    python route_synthesis.py [INPUT.json|-] [--reference-receipt FILE]
+        [--output FILE] [--overwrite yes|no] [--pretty]
 
-If INPUT is omitted or is ``-``, JSON is read from standard input. Successful
-output contains exactly ``route``, ``runner_allowed``, ``stop_reason``, and
-``required_handoff``. It is written to stdout by default, or atomically as
-UTF-8 when ``--output`` is supplied. Validation failures are emitted as JSON
-on stderr.
+If INPUT is omitted or is ``-``, JSON is read from standard input. The output
+includes the synthesis decision, deterministic reference requirements, a
+canonical plan hash, and the P0-6 reference-gate result. ``runner_allowed`` is
+false until a receipt bound to the same plan passes. Output is written to
+stdout by default, or atomically as UTF-8 when ``--output`` is supplied.
 
 Exit codes:
     0: a route was produced
@@ -25,14 +25,22 @@ import os
 import sys
 import tempfile
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 from typing import Any, Mapping, Sequence
+
+from reference_gate import (
+    build_gate_result,
+    load_json_file,
+    load_reference_routes,
+    resolve_requirements,
+)
 
 
 EXIT_OK = 0
 EXIT_INVALID_INPUT = 1
 EXIT_INPUT_ERROR = 2
-SCHEMA_VERSION = "1.2"
+SCHEMA_VERSION = "1.3"
 
 ROUTES = {
     "aggregate_effect_meta",
@@ -62,7 +70,17 @@ SPECIALIST_HANDOFFS = {
     "latent_class_analysis": "latent_class_model_specialist",
 }
 
-ROOT_FIELDS = {"schema_version", "pooling", "data", "specialist_triggers"}
+ROOT_FIELDS = {"schema_version", "task", "pooling", "data", "specialist_triggers"}
+TASK_FIELDS = {
+    "product_type",
+    "domain",
+    "stage",
+    "as_of_date",
+    "decision_points",
+    "topic_tags",
+    "appraisal_tools",
+    "certainty_frameworks",
+}
 POOLING_FIELDS = {"eligible", "ineligibility_reason"}
 DATA_FIELDS = {
     "level",
@@ -103,6 +121,58 @@ ECOLOGY_CONTRACT_TRIGGERS = {
     "ecosystem_multifunctionality",
     "derived_recovery_stability",
 }
+PRODUCT_TYPES = {
+    "protocol",
+    "systematic_review",
+    "systematic_map",
+    "scoping_review",
+    "rapid_review",
+    "umbrella_review",
+    "quantitative_reanalysis",
+    "audit",
+    "manuscript_report",
+}
+DOMAINS = {
+    "medical",
+    "public_health",
+    "ecology",
+    "evolution",
+    "conservation",
+    "environmental_science",
+    "general_science",
+}
+STAGES = {
+    "planning",
+    "search",
+    "screening",
+    "extraction",
+    "appraisal",
+    "analysis",
+    "interpretation",
+    "reporting",
+    "audit",
+}
+DECISION_POINTS = {
+    "question_protocol",
+    "search_selection",
+    "study_report_linkage",
+    "extraction",
+    "effect_size",
+    "dependence",
+    "synthesis_model",
+    "small_study_effects",
+    "risk_of_bias",
+    "certainty",
+    "reporting",
+    "r_implementation",
+    "lineage",
+    "source_governance",
+    "ai_assistance",
+    "benchmark_audit",
+}
+TOPIC_TAGS = {"plant_ecology", "biodiversity", "community_ecology", "restoration"}
+APPRAISAL_TOOLS = {"rob2", "robins_i", "robins_e", "quadas3", "jbi", "feat", "ceesat", "mates"}
+CERTAINTY_FRAMEWORKS = {"grade", "cee_confidence"}
 
 
 class DuplicateKeyError(ValueError):
@@ -138,6 +208,18 @@ def build_parser() -> argparse.ArgumentParser:
         "--pretty",
         action="store_true",
         help="Indent output JSON; key ordering remains deterministic",
+    )
+    skill_root = Path(__file__).resolve().parent.parent
+    parser.add_argument(
+        "--reference-receipt",
+        type=Path,
+        help="P0-6 receipt to validate before allowing an executable route",
+    )
+    parser.add_argument(
+        "--reference-routes",
+        type=Path,
+        default=skill_root / "assets" / "reference_routes.json",
+        help="machine-readable reference-route registry",
     )
     parser.add_argument(
         "--output",
@@ -239,6 +321,9 @@ def validate_input(payload: Any) -> tuple[Mapping[str, Any] | None, list[Issue]]
             )
         )
 
+    task = add_shape_issues(
+        root.get("task"), path="task", required_fields=TASK_FIELDS, issues=issues
+    )
     pooling = add_shape_issues(
         root.get("pooling"),
         path="pooling",
@@ -254,6 +339,78 @@ def validate_input(payload: Any) -> tuple[Mapping[str, Any] | None, list[Issue]]
         required_fields=set(SPECIALIST_HANDOFFS),
         issues=issues,
     )
+
+    task_values: dict[str, Any] = {}
+    if task is not None:
+        scalar_fields = {
+            "product_type": PRODUCT_TYPES,
+            "domain": DOMAINS,
+            "stage": STAGES,
+        }
+        for field, supported in scalar_fields.items():
+            value = task.get(field)
+            if not isinstance(value, str) or value not in supported:
+                issues.append(
+                    Issue(
+                        "unsupported_value",
+                        f"task.{field}",
+                        "must be one of: " + ", ".join(sorted(supported)),
+                    )
+                )
+            else:
+                task_values[field] = value
+
+        raw_as_of = task.get("as_of_date")
+        if raw_as_of is not None:
+            if not isinstance(raw_as_of, str):
+                issues.append(Issue("wrong_type", "task.as_of_date", "must be an ISO date or null"))
+            else:
+                try:
+                    date.fromisoformat(raw_as_of)
+                except ValueError:
+                    issues.append(Issue("invalid_date", "task.as_of_date", "must be YYYY-MM-DD or null"))
+                else:
+                    task_values["as_of_date"] = raw_as_of
+        else:
+            task_values["as_of_date"] = None
+
+        list_fields = {
+            "decision_points": (DECISION_POINTS, False),
+            "topic_tags": (TOPIC_TAGS, True),
+            "appraisal_tools": (APPRAISAL_TOOLS, True),
+            "certainty_frameworks": (CERTAINTY_FRAMEWORKS, True),
+        }
+        for field, (supported, allow_empty) in list_fields.items():
+            value = task.get(field)
+            if not isinstance(value, list):
+                issues.append(Issue("wrong_type", f"task.{field}", "must be an array of supported strings"))
+                continue
+            if not allow_empty and not value:
+                issues.append(Issue("missing_value", f"task.{field}", "must contain at least one decision point"))
+            if any(not isinstance(item, str) or item not in supported for item in value):
+                issues.append(
+                    Issue(
+                        "unsupported_value",
+                        f"task.{field}",
+                        "values must be unique members of: " + ", ".join(sorted(supported)),
+                    )
+                )
+            elif len(value) != len(set(value)):
+                issues.append(Issue("duplicate_value", f"task.{field}", "must not contain duplicate values"))
+            else:
+                task_values[field] = list(value)
+
+        decisions = task_values.get("decision_points", [])
+        appraisal_tools = task_values.get("appraisal_tools", [])
+        certainty_frameworks = task_values.get("certainty_frameworks", [])
+        if "risk_of_bias" in decisions and not appraisal_tools:
+            issues.append(Issue("missing_value", "task.appraisal_tools", "must declare at least one tool for a risk-of-bias decision"))
+        if "risk_of_bias" not in decisions and appraisal_tools:
+            issues.append(Issue("contradiction", "task.appraisal_tools", "must be empty unless risk_of_bias is a requested decision point"))
+        if "certainty" in decisions and not certainty_frameworks:
+            issues.append(Issue("missing_value", "task.certainty_frameworks", "must declare at least one framework for a certainty decision"))
+        if "certainty" not in decisions and certainty_frameworks:
+            issues.append(Issue("contradiction", "task.certainty_frameworks", "must be empty unless certainty is a requested decision point"))
 
     eligible: bool | None = None
     reason: str | None = None
@@ -522,6 +679,57 @@ def validate_input(payload: Any) -> tuple[Mapping[str, Any] | None, list[Issue]]
             else:
                 trigger_values[name] = value
 
+    task_domain = task_values.get("domain")
+    topic_tags = task_values.get("topic_tags", [])
+    health_domains = {"medical", "public_health"}
+    ecology_domains = {"ecology", "evolution", "conservation", "environmental_science"}
+    active_medical = sorted(
+        name for name in ("diagnostic", "dose_response", "network")
+        if trigger_values.get(name) is True
+    )
+    if active_medical and task_domain not in health_domains:
+        issues.append(
+            Issue(
+                "contradiction",
+                "task.domain",
+                "must be medical or public_health for specialist trigger(s): "
+                + ", ".join(active_medical),
+            )
+        )
+    active_ecology = sorted(
+        name for name in ECOLOGY_CONTRACT_TRIGGERS
+        if trigger_values.get(name) is True
+    )
+    if active_ecology and task_domain not in ecology_domains:
+        issues.append(
+            Issue(
+                "contradiction",
+                "task.domain",
+                "must be an ecology/environment domain for specialist trigger(s): "
+                + ", ".join(active_ecology),
+            )
+        )
+    if topic_tags and task_domain not in ecology_domains:
+        issues.append(
+            Issue(
+                "contradiction",
+                "task.topic_tags",
+                "plant, biodiversity, community, and restoration tags require an ecology/environment domain",
+            )
+        )
+    if (
+        trigger_values.get("diagnostic") is True
+        and "risk_of_bias" in task_values.get("decision_points", [])
+        and "quadas3" not in task_values.get("appraisal_tools", [])
+    ):
+        issues.append(
+            Issue(
+                "contradiction",
+                "task.appraisal_tools",
+                "diagnostic risk-of-bias appraisal must include quadas3",
+            )
+        )
+
     level_trigger_pairs = {
         "ipd": "ipd",
         "raw_community_matrix": "raw_community_matrix",
@@ -573,6 +781,7 @@ def validate_input(payload: Any) -> tuple[Mapping[str, Any] | None, list[Issue]]
     assert covariance_status is not None
     assert len(trigger_values) == len(SPECIALIST_HANDOFFS)
     return {
+        "task": task_values,
         "eligible": eligible,
         "reason": reason,
         "level": level,
@@ -795,7 +1004,39 @@ def main(argv: Sequence[str] | None = None) -> int:
         return EXIT_INVALID_INPUT
 
     assert validated is not None
+    try:
+        registry = load_reference_routes(args.reference_routes)
+        receipt = load_json_file(args.reference_receipt) if args.reference_receipt else None
+    except RuntimeError as exc:
+        emit_json(
+            {"error": "reference_gate_input_error", "message": str(exc)},
+            pretty=args.pretty,
+            stream=sys.stderr,
+        )
+        return EXIT_INPUT_ERROR
+
     result = route(validated)
+    provisional_allowed = result["runner_allowed"]
+    requirements = resolve_requirements(payload, registry)
+    gate = build_gate_result(
+        receipt,
+        plan=payload,
+        requirements=requirements,
+        registry=registry,
+        skill_root=Path(__file__).resolve().parent.parent,
+    )
+    result["provisional_runner_allowed"] = provisional_allowed
+    result.update(requirements)
+    result["reference_gate"] = {
+        **gate,
+        "decision_points": validated["task"]["decision_points"],
+    }
+    if gate["status"] != "passed":
+        result["runner_allowed"] = False
+        if provisional_allowed:
+            result["stop_reason"] = "Reference gate blocked execution: " + "; ".join(
+                issue["message"] for issue in gate["issues"]
+            )
     if output_path is None:
         emit_json(result, pretty=args.pretty, stream=sys.stdout)
     else:
