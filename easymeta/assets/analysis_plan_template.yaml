@@ -1,6 +1,6 @@
-schema_version: "1.2"
+schema_version: "1.3"
 template_status: working_template_not_official
-migration_note: "v1.2 adds route schema 1.2, biodiversity contracts, CEESAT 2.2/MATES target selection, and per-system-stage AI validation. Preserve frozen v1.1 plans and record migration as a protocol change."
+migration_note: "v1.3 adds the P0-6 reference-routing contract and receipt hard gate. Preserve frozen v1.2 plans and record migration as a protocol change."
 
 review:
   title: ""
@@ -39,7 +39,7 @@ question:
         sampling_coverage: null
 
 synthesis_route:
-  schema_version: "1.2"
+  schema_version: "1.3"
   input_template_path: assets/synthesis_route_template.json
   completed_plan_path: ""
   router_path: scripts/route_synthesis.py
@@ -48,6 +48,17 @@ synthesis_route:
   runner_allowed: null
   stop_reason: ""
   required_handoff: []
+  reference_gate:
+    registry_path: assets/reference_routes.json
+    receipt_template_path: assets/reference_receipt_template.json
+    receipt_path: ""
+    plan_sha256: ""
+    status: pending  # pending | failed | passed
+    required_references: []
+    required_source_ids: []
+    required_living_source_ids: []
+    matched_reference_rules: []
+    attestation_boundary: "A valid receipt verifies the audit record, not human or model comprehension."
   ecology_specialist_trigger_review:
     raw_community_matrix: false
     community_composition: false

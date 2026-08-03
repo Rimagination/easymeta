@@ -21,7 +21,7 @@ Treat statistical pooling as optional. Recommend structured narrative synthesis 
 - Separate sampling-error covariance `V`, true-effect random/correlation structure, and coefficient-level robust inference. None of these three layers substitutes for another.
 - Never treat the analysis used by a high-impact benchmark paper as a universal default; reconstruct its question, estimand, sampling unit, dependence, and assumptions before borrowing any method.
 - Never mix reported natural-scale estimates with analysis-scale standard errors or variances. Keep raw extraction and analysis effects as separate versioned data stages.
-- Never run the ordinary `yi/vi` model runner until the synthesis router permits it and an independent sampling-cluster field is declared.
+- Never run the ordinary `yi/vi` model runner until the synthesis router permits it, the P0-6 reference gate has passed, and an independent sampling-cluster field is declared.
 - Never choose common/fixed-effect versus random-effects models from a heterogeneity-test P value alone.
 - Never return a binary “publication bias present/absent” verdict from funnel, Egger, trim-and-fill, fail-safe, P-curve, or one selection model.
 - Distinguish reporting guidance from conduct guidance and risk-of-bias tools from certainty-of-evidence frameworks.
@@ -29,6 +29,7 @@ Treat statistical pooling as optional. Recommend structured narrative synthesis 
 - Report uncertainty, limitations, protocol deviations, exclusions, and failed analyses even when they weaken the narrative.
 - Require human verification for eligibility decisions, extracted values, risk-of-bias judgments, clinical/ecological interpretation, and all AI-generated outputs used in a review.
 - Use current official guidance when standards, software defaults, or package behavior may have changed. Record the source version and access date.
+- Never treat `read=true`, a file hash, or a completed receipt as proof that a person or model understood a source. The receipt is an auditable attestation; consequential interpretation still requires human verification.
 
 ## Route the task
 
@@ -39,9 +40,12 @@ Treat statistical pooling as optional. Recommend structured narrative synthesis 
 3. Identify eligible study designs, outcome families, effect estimands, unit of analysis, spatial/temporal scale, and intended decision context.
 4. Identify the data level: use `aggregate` for report-level effects or arm/cell summaries, `ipd` for individual/unit-level raw data, `raw_community_matrix` for species-by-sample matrices, and `meta_level` for existing Meta-analysis summaries. Then identify multiple outcomes/time points, clustered studies, phylogenetic data, or spatially/temporally correlated data.
 5. State whether the request concerns planning, execution, interpretation, reporting, or independent audit.
-6. Copy `assets/synthesis_route_template.json`, complete every field, and run `python scripts/route_synthesis.py <plan.json> --output <route.json>`. Obey `runner_allowed=false`; do not silently simplify a specialist or non-pooling problem into ordinary Meta analysis.
+6. Copy `assets/synthesis_route_template.json`, complete the task, data, and trigger fields, set `task.as_of_date` to the actual guidance-check date, and run `python scripts/route_synthesis.py <plan.json> --output <pending-route.json>`. The first pass deterministically returns `required_references`, `required_source_ids`, matched rules, and a plan SHA-256; it keeps `runner_allowed=false` while the receipt is pending.
+7. Read only the routed local references and open the current official pages for every routed source ID. Copy `assets/reference_receipt_template.json`; record exact local-file SHA-256 values, section locators that occur in those files, decision mappings, source versions, access dates, milestone checks, update summaries, and the accountable reviewer/agent run.
+8. Run `python scripts/validate_reference_receipt.py <pending-route.json> <receipt.json>`. Resolve every failure; do not substitute a free-text claim of reading.
+9. Re-run `python scripts/route_synthesis.py <plan.json> --reference-receipt <receipt.json> --output <route.json>`. Require `reference_gate.status=passed` before any analysis handoff. Use the ordinary runner only when `runner_allowed=true`; when `route=specialist_route`, keep the ordinary runner blocked and follow `required_handoff` plus the specialist input contract. A `no_pooling` route never becomes executable.
 
-Load only the references needed:
+`assets/reference_routes.json` is the authoritative machine-readable routing table. The following list is its human-readable mirror; never use it to bypass or broaden the routed minimum set:
 
 - Always read `references/evidence-synthesis-core.md` before planning a full review.
 - Read `references/medical-review.md` for medicine, public health, diagnostics, prognosis, prevalence, etiology, harms, or clinical interventions.
@@ -58,6 +62,8 @@ Load only the references needed:
 - Read `references/plant-biodiversity-benchmark-casebook.md` when designing or auditing a method against the collected Nature, Science-family, Ecology Letters, PNAS, and forest-ecology benchmark studies.
 - Read `references/quality-control-contracts.md` before reconciling duplicate extraction, linking reports to studies, or validating appraisal records.
 - Read `references/source-registry.md` when checking authority, licensing, versioning, or update frequency of source guidance.
+
+If the machine table and this prose disagree, stop, treat the table or documentation as a defect, and reconcile both with a tested change. Do not silently choose whichever route is more convenient.
 
 ## Execute the workflow
 
@@ -103,7 +109,7 @@ Load only the references needed:
 - When sampling covariance is explicit or can be defensibly approximated, use `scripts/build_sampling_v.R` to construct an audited `V` under stated `rho`/`phi` scenarios; never guess design fields or shared-group weights.
 - Report the heterogeneity estimator, interval method, variance components, uncertainty in heterogeneity, and prediction intervals where defensible.
 - Treat subgroup analysis and meta-regression as observational comparisons. Limit complexity when the number and distribution of studies do not support the planned moderators.
-- Use `scripts/run_meta_analysis.R` as a conservative baseline, then extend it only with documented justification.
+- Use `scripts/run_meta_analysis.R --route-contract <route.json> ...` as a conservative baseline, then extend it only with documented justification. The runner independently rejects a missing contract, a specialist/no-pooling route, `runner_allowed=false`, a non-passed reference gate, gate issues, or an invalid plan hash.
 - Keep the ordinary runner blocked for specialist routes. Use `scripts/run_diagnostic_meta.R` only for one threshold per study with study-level 2x2 data; use `scripts/run_dose_response.R` only for a prespecified two-stage linear trend with an explicit sampling covariance matrix; use `scripts/run_network_meta.R` only for a connected contrast network under a consistency model, without treating ranking or inconsistency as solved.
 - Keep the ordinary runner blocked when the estimand must first be generated from a raw community matrix, community-composition distance, multidimensional biodiversity object, variability contrast, factorial interaction, multifunctionality construction, longitudinal resistance/recovery process, derived recovery-debt/stability quantity, or second-order/cross-meta evidence base. Set the matching schema 1.2 trigger; for biodiversity/ecology triggers, validate `assets/biodiversity_contract_template.json` with `scripts/validate_biodiversity_contract.py` and record its path before routing. Do not convert such inputs to generic `yi/vi` merely to make the baseline runner accept them.
 - Shared controls alone do not require a new specialist route when the target effects are already defined: declare dependent effects, construct and audit the sampling `V`, identify independent clusters, and use a defensible multilevel/multivariate model or robust sensitivity analysis. Escalate multidimensional outcomes or unidentified covariance rather than duplicating the control as independent information.
@@ -142,12 +148,12 @@ Return the smallest complete package appropriate to the request:
 1. question, scope, estimand, and assumptions;
 2. protocol or analysis-plan decisions and deviations;
 3. study/effect data schema with provenance;
-4. synthesis route, pooling decision, effect-size and model rationale;
+4. synthesis route, P0-6 reference receipt, pooling decision, effect-size and model rationale;
 5. executable code and validation output when analysis is requested;
 6. primary, heterogeneity, robustness, and bias results;
 7. certainty/confidence assessment where applicable;
 8. limitations, applicability, and non-pooling rationale;
 9. reporting checklist mapping, publication-integrity disposition, and reproducibility/lineage record;
-10. authoritative source list with versions and access dates.
+10. authoritative source list with versions, access dates, milestone checks, and update/adoption decisions.
 
 Resolve `Rscript` from `R_SCRIPT` or the system `PATH`, and record the R and package versions used for every analysis.

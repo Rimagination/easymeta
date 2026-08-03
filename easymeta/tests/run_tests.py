@@ -161,6 +161,8 @@ def runner_base(effects: Path, output_dir: Path, model: str, scale: str) -> list
     return [
         R_SCRIPT,
         SCRIPTS / "run_meta_analysis.R",
+        "--route-contract",
+        FIXTURES / "passed_reference_route.json",
         "--input",
         effects,
         "--output-dir",
@@ -185,11 +187,13 @@ def test_r_packages() -> None:
             "-e",
             "stopifnot(requireNamespace('metafor', quietly=TRUE)); "
             "stopifnot(requireNamespace('clubSandwich', quietly=TRUE)); "
-            "cat(as.character(packageVersion('metafor')), as.character(packageVersion('clubSandwich')), sep='|')",
+            "stopifnot(requireNamespace('jsonlite', quietly=TRUE)); "
+            "cat(as.character(packageVersion('metafor')), as.character(packageVersion('clubSandwich')), "
+            "as.character(packageVersion('jsonlite')), sep='|')",
         ]
     )
-    if "|" not in result.stdout:
-        raise TestFailure("R package version probe did not return both versions")
+    if result.stdout.count("|") != 2:
+        raise TestFailure("R package version probe did not return all three versions")
 
 
 def test_two_stage_and_models(work: Path) -> None:
@@ -207,11 +211,34 @@ def test_two_stage_and_models(work: Path) -> None:
     for row in effect_rows:
         assert_close(float(row["sei"]) ** 2, float(row["vi"]), f"vi/sei contract {row['effect_id']}")
 
+    missing_route = runner_base(effects, work / "reject_missing_route", "common", "log")
+    route_index = missing_route.index("--route-contract")
+    del missing_route[route_index : route_index + 2]
+    run(missing_route + ["--prediction", "no", "--overwrite", "yes"], expected=2)
+
+    pending_route = json.loads((FIXTURES / "passed_reference_route.json").read_text(encoding="utf-8"))
+    pending_route["runner_allowed"] = False
+    pending_route["reference_gate"]["status"] = "pending"
+    pending_route["reference_gate"]["issues"] = [{
+        "code": "missing_reference_receipt",
+        "field": "reference_receipt",
+        "message": "test pending gate",
+    }]
+    pending_path = work / "pending-reference-route.json"
+    pending_path.write_text(json.dumps(pending_route), encoding="utf-8")
+    pending_command = runner_base(effects, work / "reject_pending_route", "common", "log")
+    pending_command[pending_command.index("--route-contract") + 1] = pending_path
+    run(pending_command + ["--prediction", "no", "--overwrite", "yes"], expected=2)
+
     common_dir = work / "common"
     run(runner_base(effects, common_dir, "common", "log") + ["--prediction", "no", "--overwrite", "yes"])
     common = read_csv(common_dir / "coefficients.csv")[0]
     assert_close(common["estimate"], GOLDEN["common_rr"]["estimate"], "common RR estimate")
     assert_close(common["display_estimate"], GOLDEN["common_rr"]["display_estimate"], "common RR display")
+    common_manifest = (common_dir / "analysis_manifest.txt").read_text(encoding="utf-8")
+    for token in ("reference_gate_status=passed", "route_plan_sha256=" + "a" * 64):
+        if token not in common_manifest:
+            raise TestFailure(f"ordinary runner manifest omitted route-gate provenance: {token}")
 
     random_dir = work / "random"
     run(
@@ -484,28 +511,80 @@ def test_logit_scale(work: Path) -> None:
 
 
 def route_payload() -> dict[str, Any]:
-    return json.loads((SKILL_ROOT / "assets" / "synthesis_route_template.json").read_text(encoding="utf-8"))
+    payload = json.loads((SKILL_ROOT / "assets" / "synthesis_route_template.json").read_text(encoding="utf-8"))
+    payload["task"]["as_of_date"] = "2026-08-03"
+    return payload
 
 
-def invoke_route(payload: Mapping[str, Any], *, expected: int = 0) -> dict[str, Any]:
-    result = run(
-        [PYTHON, SCRIPTS / "route_synthesis.py", "-"],
-        stdin=json.dumps(payload),
-        expected=expected,
-    )
+def make_reference_receipt(payload: Mapping[str, Any], pending: Mapping[str, Any]) -> dict[str, Any]:
+    rule_id = pending["matched_reference_rules"][0]
+    references = []
+    for relative in pending["required_references"]:
+        path = SKILL_ROOT / relative
+        heading = next(line for line in path.read_text(encoding="utf-8").splitlines() if line.startswith("#"))
+        references.append({
+            "path": relative,
+            "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "sections_used": [heading],
+            "decision_mapping": [{"decision_id": rule_id, "applied_rule": "test decision mapping"}],
+        })
+    sources = [{
+        "source_id": source_id,
+        "version_used": "test-version",
+        "accessed_at": payload["task"]["as_of_date"],
+        "checked_at_milestone": payload["task"]["stage"],
+        "adoption_decision": "adopted",
+        "change_summary": "test update check",
+    } for source_id in pending["required_source_ids"]]
+    return {
+        "schema_version": "1.0",
+        "plan_sha256": pending["reference_gate"]["plan_sha256"],
+        "task_stage": payload["task"]["stage"],
+        "attested_by": "test-runner",
+        "attested_at": payload["task"]["as_of_date"],
+        "reference_files": references,
+        "source_records": sources,
+    }
+
+
+def invoke_route(
+    payload: Mapping[str, Any], *, expected: int = 0, pass_reference_gate: bool = False
+) -> dict[str, Any]:
+    command: list[str | Path] = [PYTHON, SCRIPTS / "route_synthesis.py", "-"]
+    if pass_reference_gate and expected == 0:
+        pending = invoke_route(payload)
+        with tempfile.TemporaryDirectory(prefix="reference-receipt-") as temporary:
+            receipt_path = Path(temporary) / "receipt.json"
+            receipt_path.write_text(
+                json.dumps(make_reference_receipt(payload, pending)), encoding="utf-8"
+            )
+            command.extend(["--reference-receipt", receipt_path])
+            result = run(command, stdin=json.dumps(payload), expected=expected)
+    else:
+        result = run(command, stdin=json.dumps(payload), expected=expected)
     stream = result.stdout if expected == 0 else result.stderr
     return json.loads(stream)
 
 
 def test_router() -> None:
-    aggregate = invoke_route(route_payload())
-    if aggregate != {
-        "route": "aggregate_effect_meta",
-        "runner_allowed": True,
-        "stop_reason": None,
-        "required_handoff": [],
-    }:
-        raise TestFailure(f"unexpected aggregate route: {aggregate}")
+    payload = route_payload()
+    pending = invoke_route(payload)
+    if pending["runner_allowed"] or pending["provisional_runner_allowed"] is not True:
+        raise TestFailure("aggregate route bypassed the missing-reference-receipt gate")
+    if pending["reference_gate"]["status"] != "pending":
+        raise TestFailure(f"unexpected pending reference gate: {pending}")
+    expected_health_refs = {
+        "references/medical-review.md",
+        "references/effect-size-and-models.md",
+        "references/r-metafor-workflows.md",
+    }
+    if set(pending["required_references"]) != expected_health_refs:
+        raise TestFailure(f"ordinary health task received the wrong reference set: {pending}")
+    aggregate = invoke_route(payload, pass_reference_gate=True)
+    if aggregate["route"] != "aggregate_effect_meta" or not aggregate["runner_allowed"]:
+        raise TestFailure(f"valid receipt did not release aggregate route: {aggregate}")
+    if aggregate["reference_gate"]["status"] != "passed" or aggregate["stop_reason"] is not None:
+        raise TestFailure(f"passed reference gate retained a stop condition: {aggregate}")
 
     dependent_payload = route_payload()
     dependent_payload["data"]["effect_structure"] = "dependent"
@@ -513,9 +592,31 @@ def test_router() -> None:
     dependent_payload["data"]["dependency_sources"] = ["shared_control"]
     dependent_payload["data"]["sampling_covariance_status"] = "derived_exact"
     dependent_payload["data"]["sampling_v_path"] = "derived/shared-control-V.csv"
-    dependent = invoke_route(dependent_payload)
+    dependent = invoke_route(dependent_payload, pass_reference_gate=True)
     if dependent["route"] != "dependent_effect_meta" or not dependent["runner_allowed"]:
         raise TestFailure("dependent aggregate data were not routed to dependent_effect_meta")
+    if "references/complex-design-effects.md" not in dependent["required_references"]:
+        raise TestFailure("shared-control dependence did not route to the complex-design reference")
+    if "references/specialist-medical-models.md" in dependent["required_references"]:
+        raise TestFailure("shared-control dependence loaded an unrelated specialist medical reference")
+    if "CLUBSANDWICH-DOCS" not in dependent["required_source_ids"]:
+        raise TestFailure("dependent R implementation omitted clubSandwich version guidance")
+
+    diagnostic_payload = route_payload()
+    diagnostic_payload["specialist_triggers"]["diagnostic"] = True
+    diagnostic = invoke_route(diagnostic_payload)
+    if not {
+        "references/medical-review.md",
+        "references/specialist-medical-models.md",
+        "references/bias-and-certainty.md",
+    }.issubset(diagnostic["required_references"]):
+        raise TestFailure("diagnostic route omitted its medical, model, or appraisal reference")
+    if not {"COCHRANE-DTA-HB-2.0", "QUADAS-3-LIVING"}.issubset(
+        diagnostic["required_source_ids"]
+    ):
+        raise TestFailure("diagnostic route omitted Cochrane DTA or QUADAS-3")
+    if "references/ecology-review.md" in diagnostic["required_references"]:
+        raise TestFailure("diagnostic route loaded an unrelated ecology reference")
 
     missing_v_payload = route_payload()
     missing_v_payload["data"]["effect_structure"] = "dependent"
@@ -554,6 +655,8 @@ def test_router() -> None:
     }
     for trigger, expected_handoff in ecology_handoffs.items():
         ecology_payload = route_payload()
+        ecology_payload["task"]["domain"] = "ecology"
+        ecology_payload["task"]["topic_tags"] = ["biodiversity"]
         ecology_payload["specialist_triggers"][trigger] = True
         if trigger in {
             "raw_community_matrix",
@@ -572,6 +675,16 @@ def test_router() -> None:
         ecology_route = invoke_route(ecology_payload)
         if ecology_route["runner_allowed"] or ecology_route["required_handoff"] != [expected_handoff]:
             raise TestFailure(f"{trigger} was not hard-routed to {expected_handoff}")
+        if trigger == "raw_community_matrix":
+            if not {
+                "references/ecology-review.md",
+                "references/plant-biodiversity-specialist-routes.md",
+            }.issubset(ecology_route["required_references"]):
+                raise TestFailure("raw community data omitted ecology/biodiversity references")
+            if "references/medical-review.md" in ecology_route["required_references"]:
+                raise TestFailure("raw community data loaded an unrelated medical reference")
+            if "references/r-metafor-workflows.md" in ecology_route["required_references"]:
+                raise TestFailure("raw community data loaded the ordinary yi/vi R workflow before estimand generation")
 
     raw_level_without_trigger = route_payload()
     raw_level_without_trigger["data"]["level"] = "raw_community_matrix"
@@ -844,7 +957,7 @@ def main() -> int:
         test_router()
         test_plant_biodiversity_knowledge_assets()
         test_integrity_and_lineage(work)
-    print("PASS: P0-1 through P0-5 end-to-end golden and rejection tests")
+    print("PASS: P0-1 through P0-6 end-to-end golden and rejection tests")
     return 0
 
 

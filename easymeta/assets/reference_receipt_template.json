@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0",
+  "plan_sha256": "REPLACE_WITH_ROUTE_PLAN_SHA256",
+  "task_stage": "analysis",
+  "attested_by": "REPLACE_WITH_REVIEWER_OR_AGENT_ID",
+  "attested_at": "REPLACE_WITH_YYYY-MM-DD",
+  "reference_files": [
+    {
+      "path": "references/effect-size-and-models.md",
+      "sha256": "REPLACE_WITH_FILE_SHA256",
+      "sections_used": ["REPLACE_WITH_SECTION_LOCATOR"],
+      "decision_mapping": [
+        {
+          "decision_id": "REPLACE_WITH_DECISION_ID",
+          "applied_rule": "REPLACE_WITH_HOW_THIS_REFERENCE_CHANGED_OR_CONFIRMED_THE_DECISION"
+        }
+      ]
+    }
+  ],
+  "source_records": [
+    {
+      "source_id": "REPLACE_WITH_REQUIRED_SOURCE_ID",
+      "version_used": "REPLACE_WITH_VERSION_OR_PAGE_STATE",
+      "accessed_at": "REPLACE_WITH_YYYY-MM-DD",
+      "checked_at_milestone": "analysis",
+      "adoption_decision": "adopted",
+      "change_summary": "REPLACE_WITH_UPDATE_CHECK_AND_IMPACT_SUMMARY"
+    }
+  ]
+}

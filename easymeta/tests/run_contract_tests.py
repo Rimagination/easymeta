@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Python-only contracts for ecology, living guidance, CEESAT, and MATES."""
+"""Python-only contracts for ecology, P0-6 references, and living guidance."""
 
 from __future__ import annotations
 
 import copy
 import csv
+import hashlib
 import json
 import subprocess
 import sys
@@ -155,10 +156,87 @@ def test_biodiversity_contract(work: Path) -> None:
     run([PYTHON, validator, path], expected=1)
 
 
-def test_route_contract_gate() -> None:
+def complete_route_task(route: dict, *, domain: str = "medical") -> dict:
+    route["task"]["domain"] = domain
+    route["task"]["as_of_date"] = "2026-08-03"
+    return route
+
+
+def build_receipt(route: dict, pending: dict) -> dict:
+    decision_id = pending["matched_reference_rules"][0]
+    references = []
+    for relative in pending["required_references"]:
+        path = ROOT / relative
+        heading = next(line for line in path.read_text(encoding="utf-8").splitlines() if line.startswith("#"))
+        references.append({
+            "path": relative,
+            "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "sections_used": [heading],
+            "decision_mapping": [{"decision_id": decision_id, "applied_rule": "contract-test mapping"}],
+        })
+    return {
+        "schema_version": "1.0",
+        "plan_sha256": pending["reference_gate"]["plan_sha256"],
+        "task_stage": route["task"]["stage"],
+        "attested_by": "contract-test",
+        "attested_at": route["task"]["as_of_date"],
+        "reference_files": references,
+        "source_records": [{
+            "source_id": source_id,
+            "version_used": "test-version",
+            "accessed_at": route["task"]["as_of_date"],
+            "checked_at_milestone": route["task"]["stage"],
+            "adoption_decision": "adopted",
+            "change_summary": "checked for contract test",
+        } for source_id in pending["required_source_ids"]],
+    }
+
+
+def test_route_contract_gate(work: Path) -> None:
     route = json.loads((ROOT / "assets" / "synthesis_route_template.json").read_text(encoding="utf-8"))
+    complete_route_task(route)
     script = ROOT / "scripts" / "route_synthesis.py"
-    run([PYTHON, script, "-"], stdin=json.dumps(route))
+    pending = json.loads(run([PYTHON, script, "-"], stdin=json.dumps(route)).stdout)
+    if pending["runner_allowed"] or pending["reference_gate"]["status"] != "pending":
+        raise Failure("missing reference receipt did not block the ordinary runner")
+
+    receipt = build_receipt(route, pending)
+    route_path = work / "pending-route.json"
+    receipt_path = work / "reference-receipt.json"
+    write_json(route_path, pending)
+    write_json(receipt_path, receipt)
+    validator = ROOT / "scripts" / "validate_reference_receipt.py"
+    run([PYTHON, validator, route_path, receipt_path])
+    passed = json.loads(run(
+        [PYTHON, script, "-", "--reference-receipt", receipt_path],
+        stdin=json.dumps(route),
+    ).stdout)
+    if not passed["runner_allowed"] or passed["reference_gate"]["status"] != "passed":
+        raise Failure("valid reference receipt did not release the ordinary runner")
+
+    stale = copy.deepcopy(receipt)
+    living_ids = set(pending["required_living_source_ids"])
+    next(record for record in stale["source_records"] if record["source_id"] in living_ids)["accessed_at"] = "2026-08-02"
+    write_json(receipt_path, stale)
+    result = run([PYTHON, validator, route_path, receipt_path], expected=1)
+    if "living_guidance_stale" not in result.stderr:
+        raise Failure("stale living guidance was not rejected")
+
+    wrong_hash = copy.deepcopy(receipt)
+    wrong_hash["reference_files"][0]["sha256"] = "0" * 64
+    write_json(receipt_path, wrong_hash)
+    result = run([PYTHON, validator, route_path, receipt_path], expected=1)
+    if "sha256_mismatch" not in result.stderr:
+        raise Failure("incorrect local-reference hash was not rejected")
+
+    traversal = copy.deepcopy(receipt)
+    traversal["reference_files"][0]["path"] = "../SKILL.md"
+    write_json(receipt_path, traversal)
+    result = run([PYTHON, validator, route_path, receipt_path], expected=1)
+    if "path_outside_allowed_root" not in result.stderr:
+        raise Failure("reference receipt accepted a path traversal")
+
+    complete_route_task(route, domain="ecology")
     route["specialist_triggers"]["community_composition"] = True
     result = run([PYTHON, script, "-"], expected=1, stdin=json.dumps(route))
     if "ecology_contract_path" not in result.stderr:
@@ -168,7 +246,7 @@ def test_route_contract_gate() -> None:
     if routed["required_handoff"] != ["community_composition_specialist"]:
         raise Failure("community composition route is incorrect")
 
-    unknown = json.loads((ROOT / "assets" / "synthesis_route_template.json").read_text(encoding="utf-8"))
+    unknown = complete_route_task(json.loads((ROOT / "assets" / "synthesis_route_template.json").read_text(encoding="utf-8")))
     unknown["data"].update({
         "effect_structure": "dependent", "dependence_topology": "unknown",
         "dependency_sources": ["other"], "sampling_covariance_status": "derived_exact",
@@ -242,6 +320,7 @@ def test_governance_contracts(work: Path) -> None:
 
 def test_distilled_assets() -> None:
     registry = (ROOT / "references" / "source-registry.md").read_text(encoding="utf-8")
+    reference_routes = json.loads((ROOT / "assets" / "reference_routes.json").read_text(encoding="utf-8"))
     casebook = (ROOT / "references" / "plant-biodiversity-benchmark-casebook.md").read_text(encoding="utf-8")
     plan = (ROOT / "assets" / "analysis_plan_template.yaml").read_text(encoding="utf-8")
     for token in (
@@ -251,11 +330,19 @@ def test_distilled_assets() -> None:
     ):
         if token not in registry:
             raise Failure(f"source registry is missing {token}")
+    for source_id in reference_routes["source_metadata"]:
+        if f"`{source_id}`" not in registry:
+            raise Failure(f"reference route source is not registered: {source_id}")
+    for rule in reference_routes["rules"]:
+        for relative in rule["required_reference_files"]:
+            if not (ROOT / relative).is_file():
+                raise Failure(f"reference route points to a missing file: {relative}")
     for token in ("BENCH-CHEN-2025", "BENCH-KECK-2025", "BENCH-SHAW-2025"):
         if token not in casebook:
             raise Failure(f"casebook is missing {token}")
     for token in (
-        'schema_version: "1.2"', "community_composition", "ecology_contract_path",
+        'schema_version: "1.3"', "community_composition", "ecology_contract_path",
+        "assets/reference_routes.json", "reference_receipt_template.json",
         'version: "2.2"', "first_meta_analysis_in_paper", "ai_stage_run_id",
         "binary_publication_bias_verdict_forbidden",
     ):
@@ -267,7 +354,7 @@ def main() -> int:
     with tempfile.TemporaryDirectory(prefix="meta-contract-tests-") as temporary:
         work = Path(temporary)
         test_biodiversity_contract(work)
-        test_route_contract_gate()
+        test_route_contract_gate(work)
         test_governance_contracts(work)
         test_distilled_assets()
     print("PASS: ecology, reporting-governance, and living-source contract tests")

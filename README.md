@@ -54,7 +54,9 @@ EasyMeta 的结果不只有森林图。一个完整任务应保留同一条证�
 
 | 文件或产物 | 用途 |
 | --- | --- |
-| `route.json` | 保存综述类型、数据层级、estimand、依赖结构、专项触发器和 `runner_allowed` 决策 |
+| `pending-route.json` | 保存任务领域/阶段、数据层级、专项触发器、匹配的资料规则、必读本地文件、必查 source ID 和 plan SHA-256；此时 `runner_allowed=false` |
+| `reference-receipt.json` | 逐项记录实际读取的本地文件哈希与章节、对应决策、官方来源版本、访问日期、里程碑检查和采用决定 |
+| `route.json` | 回执通过后保存最终综合路线与 `runner_allowed`；专项路线或不合并路线即使资料门通过也不会被普通 runner 放行 |
 | `study-report-map.csv` | 区分研究与报告，记录多篇报告、样本重叠和无法消解的身份问题 |
 | `raw-extraction.csv` | 保存逐字段原始提取值、页码或表图位置、单位、方向和提取者 |
 | `analysis-effects.csv` | 保存经审计的 `yi`、`vi`、分析尺度、转换公式和独立抽样簇 |
@@ -90,10 +92,33 @@ EasyMeta 还会主动拒绝以下做法：
 ## 它如何工作
 
 1. **定义问题**：明确产品类型、PICO/PECO、estimand、结局、尺度、时间范围和决策语境。
-2. **建立证据集**：设计检索与筛选，关联研究和报告，完成双人提取、裁决与完整性检查。
-3. **构造效应量**：统一方向、单位和分析尺度，记录转换、独立抽样簇、抽样协方差 `V` 和真实效应结构。
-4. **分析与诊断**：路由适用模型，报告异质性、预测目标、影响点、缺失证据和敏感性分析。
-5. **评价与报告**：分层记录风险偏倚、证据确定性、综述可靠性、报告完整性、来源版本和字段 lineage。
+2. **路由资料**：由 `task.domain`、`task.stage`、decision points、数据层级、依赖来源和专项触发器匹配 `reference_routes.json`，生成最小必读文件与 source ID 集合。
+3. **验证阅读记录**：用 plan 哈希绑定回执，核对本地文件字节、章节定位、决策映射和 living guidance 的当次里程碑检查；未通过时普通 runner 保持关闭。
+4. **建立证据集**：设计检索与筛选，关联研究和报告，完成双人提取、裁决与完整性检查。
+5. **构造效应量**：统一方向、单位和分析尺度，记录转换、独立抽样簇、抽样协方差 `V` 和真实效应结构。
+6. **分析与诊断**：路由适用模型，报告异质性、预测目标、影响点、缺失证据和敏感性分析。
+7. **评价与报告**：分层记录风险偏倚、证据确定性、综述可靠性、报告完整性、来源版本和字段 lineage。
+
+### 资料怎样抵达正确决策点
+
+EasyMeta 不把书籍全文塞进 `SKILL.md`，也不要求每次读取全部资料。第一次运行路由器时，它按机器可读规则取并集并去重：普通医学分析只得到医学、效应量和 R 实现资料；诊断任务额外得到 Cochrane DTA、QUADAS-3 与专项模型资料；原始群落矩阵转向生态、生物多样性、Hill 数和尺度资料；共享对照则转向复杂设计、抽样协方差与依赖推断。回归测试同时断言无关医学或生态资料不会混入这些集合。
+
+```powershell
+# 1. 完成模板；task.as_of_date 写实际核验日期
+python easymeta/scripts/route_synthesis.py plan.json --output pending-route.json
+
+# 2. 按 pending-route.json 的最小集合阅读并填写回执
+python easymeta/scripts/validate_reference_receipt.py pending-route.json reference-receipt.json
+
+# 3. 同一 plan + 合格回执才可能放行普通 runner
+python easymeta/scripts/route_synthesis.py plan.json `
+  --reference-receipt reference-receipt.json --output route.json
+
+# 普通 runner 本身也要求这份 passed route，不能只靠提示词放行
+Rscript easymeta/scripts/run_meta_analysis.R --route-contract route.json ...
+```
+
+这个 gate 能证明的是：回执绑定了哪份 plan、哪些本地文件字节、哪些章节和哪些来源版本，并且 living source 在声明的日期/阶段被检查。它不能证明人或模型真正理解了资料，也不能自动证明官网内容确为最新；这些仍需人工复核，必要时联网核验。
 
 仓库中的 Python 校验器和 R 分析器可以本地运行。通过 Agent 处理论文全文或未公开数据时，数据是否离开本机取决于所用 Agent、模型和连接器配置；请先确认版权、隐私、伦理与机构政策。
 
@@ -105,7 +130,7 @@ cd easymeta
 python easymeta/tests/run_contract_tests.py
 ```
 
-完整测试还需要 R、[`metafor`](https://wviechtb.github.io/metafor/) 和 [`clubSandwich`](https://jepusto.github.io/clubSandwich/)。如果 `Rscript` 不在 `PATH`，设置 `R_SCRIPT`；如果 R 包位于自定义库，设置 `META_TEST_R_LIBRARY`：
+完整测试还需要 R、[`metafor`](https://wviechtb.github.io/metafor/)、[`clubSandwich`](https://jepusto.github.io/clubSandwich/) 和用于核验 route contract 的 [`jsonlite`](https://cran.r-project.org/package=jsonlite)。如果 `Rscript` 不在 `PATH`，设置 `R_SCRIPT`；如果 R 包位于自定义库，设置 `META_TEST_R_LIBRARY`：
 
 ```powershell
 $env:R_SCRIPT = 'path\to\Rscript.exe'
@@ -113,7 +138,7 @@ $env:META_TEST_R_LIBRARY = 'path\to\R-library'
 python easymeta/tests/run_all_tests.py
 ```
 
-当前版本通过 P0-1 至 P0-5 全部测试和 31 个 P1 端到端案例。本次验证环境使用 R 4.5.3、`metafor 5.0.1`、`clubSandwich 0.7.0` 和 `jsonlite 2.0.0`。这些测试证明代码和数据合同按预期工作，不构成对任意真实研究的科学有效性认证。
+当前版本覆盖 P0-1 至 P0-6，并保留 31 个 P1 端到端案例；P0-6 额外测试医学诊断、原始群落矩阵、共享对照、错误哈希、过期 living guidance 和路径穿越。本次验证环境使用 R 4.5.3、`metafor 5.0.1`、`clubSandwich 0.7.0` 和 `jsonlite 2.0.0`。这些测试证明代码和数据合同按预期工作，不构成对任意真实研究的科学有效性认证。
 
 项目结构：
 
@@ -121,7 +146,7 @@ python easymeta/tests/run_all_tests.py
 easymeta/
 ├── SKILL.md                 # 核心路由、硬规则与执行流程
 ├── agents/openai.yaml       # Codex 展示与默认提示
-├── assets/                  # 分析计划、提取表和机器可读合同
+├── assets/                  # 分析计划、资料路由/回执、提取表和机器可读合同
 ├── references/              # 医学、生态、模型、报告和来源方法库
 ├── scripts/                 # Python 校验器与 R 分析器
 └── tests/                   # 合同、P0 与 P1 端到端测试
@@ -136,6 +161,8 @@ easymeta/
 - [`effect-size-and-models.md`](easymeta/references/effect-size-and-models.md)：效应量、依赖、异质性和模型
 - [`plant-biodiversity-specialist-routes.md`](easymeta/references/plant-biodiversity-specialist-routes.md)：植物与生物多样性专项路线
 - [`source-registry.md`](easymeta/references/source-registry.md)：核心来源的版本、适用范围、许可和更新治理
+- [`reference_routes.json`](easymeta/assets/reference_routes.json)：任务字段到最小必读文件、source ID 与 living-source 标记的机器路由
+- [`reference_receipt_template.json`](easymeta/assets/reference_receipt_template.json)：绑定 plan、章节、决策与来源核验记录的 P0-6 回执模板
 
 ## 许可
 
