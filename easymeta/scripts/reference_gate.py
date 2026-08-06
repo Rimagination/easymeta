@@ -130,6 +130,12 @@ def _predicate_matches(payload: Mapping[str, Any], predicate: Mapping[str, Any])
         return isinstance(actual, list) and predicate["value"] in actual
     if operator == "intersects":
         return isinstance(actual, list) and bool(set(actual) & set(predicate["values"]))
+    if operator == "lte":
+        return (
+            isinstance(actual, (int, float))
+            and not isinstance(actual, bool)
+            and actual <= predicate["value"]
+        )
     raise RuntimeError(f"Unsupported reference-route operator {operator!r}")
 
 
@@ -137,8 +143,8 @@ def _validate_predicate(predicate: Any, *, field: str) -> None:
     if not isinstance(predicate, dict):
         raise RuntimeError(f"{field} must be an object")
     operator = predicate.get("operator")
-    expected = {"path", "operator", "value"} if operator in {"equals", "contains"} else {"path", "operator", "values"}
-    if operator not in {"equals", "in", "contains", "intersects"}:
+    expected = {"path", "operator", "value"} if operator in {"equals", "contains", "lte"} else {"path", "operator", "values"}
+    if operator not in {"equals", "in", "contains", "intersects", "lte"}:
         raise RuntimeError(f"{field}.operator is unsupported")
     if set(predicate) != expected:
         raise RuntimeError(f"{field} fields must exactly equal {sorted(expected)}")
@@ -146,6 +152,11 @@ def _validate_predicate(predicate: Any, *, field: str) -> None:
         raise RuntimeError(f"{field}.path must be a non-empty string")
     if "values" in predicate and (not isinstance(predicate["values"], list) or not predicate["values"]):
         raise RuntimeError(f"{field}.values must be a non-empty array")
+    if operator == "lte" and (
+        not isinstance(predicate["value"], (int, float))
+        or isinstance(predicate["value"], bool)
+    ):
+        raise RuntimeError(f"{field}.value must be numeric for lte")
 
 
 def load_reference_routes(path: Path) -> Mapping[str, Any]:

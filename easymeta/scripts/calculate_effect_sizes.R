@@ -23,7 +23,7 @@ help_text <- paste0(
   "  Rscript calculate_effect_sizes.R --input FILE --output FILE --measure CODE [options]\n\n",
   "Supported CODE routes and required column mappings:\n",
   "  OR RR RD AS PETO      --ai-col --bi-col --ci-col --di-col\n",
-  "  MD SMD SMDH ROM       --m1i-col --m2i-col --sd1i-col --sd2i-col --n1i-col --n2i-col\n",
+  "  MD SMD SMDH ROM VR CVR --m1i-col --m2i-col --sd1i-col --sd2i-col --n1i-col --n2i-col\n",
   "  IRR IRD IRSD          --x1i-col --x2i-col --t1i-col --t2i-col\n",
   "  COR UCOR ZCOR         --ri-col --ni-col\n",
   "  PR PLN PLO PRZ PAS    --xi-col --ni-col\n",
@@ -44,8 +44,8 @@ help_text <- paste0(
   "  --drop-double-zero yes|no            required when double-zero rows occur\n\n",
   "Other options:\n",
   "  --study-id-col COLUMN\n",
-  "  --bias-correction yes|no             required for SMD/SMDH/ROM/SMCC/SMCR/SMCRH\n",
-  "  --vtype CODE                         required for SMD/SMDH/ROM/COR/UCOR\n",
+  "  --bias-correction yes|no             required for SMD/SMDH/ROM/VR/CVR/SMCC/SMCR/SMCRH\n",
+  "  --vtype CODE                         required for SMD/SMDH/ROM/VR/CVR/COR/UCOR\n",
   "  --allow-asymmetric-ci yes|no         default: no\n",
   "  --analysis-scale LABEL               required for GEN input already on its analysis scale\n",
   "  --na-action fail|omit                default: fail; omit writes .excluded.csv\n",
@@ -146,7 +146,7 @@ allow_asymmetric <- parse_yes_no(get_opt("allow-asymmetric-ci"), "--allow-asymme
 
 supported_measures <- c(
   "OR", "RR", "RD", "AS", "PETO",
-  "MD", "SMD", "SMDH", "ROM",
+  "MD", "SMD", "SMDH", "ROM", "VR", "CVR",
   "IRR", "IRD", "IRSD", "COR", "UCOR", "ZCOR",
   "PR", "PLN", "PLO", "PRZ", "PAS",
   "IR", "IRLN", "IRS", "MN", "MNLN", "SDLN", "CVLN",
@@ -265,7 +265,7 @@ if (measure %in% c("OR", "RR", "RD", "AS", "PETO")) {
     ai = mapped_numeric("ai-col"), bi = mapped_numeric("bi-col"),
     ci = mapped_numeric("ci-col"), di = mapped_numeric("di-col")
   )
-} else if (measure %in% c("MD", "SMD", "SMDH", "ROM")) {
+} else if (measure %in% c("MD", "SMD", "SMDH", "ROM", "VR", "CVR")) {
   route <- "continuous"
   inputs <- list(
     m1i = mapped_numeric("m1i-col"), m2i = mapped_numeric("m2i-col"),
@@ -380,6 +380,12 @@ if (route == "continuous") {
   if (measure == "ROM" && any(inputs$m1i <= 0 | inputs$m2i <= 0)) {
     abort("ROM requires strictly positive means in both groups.")
   }
+  if (measure %in% c("VR", "CVR") && any(inputs$sd1i <= 0 | inputs$sd2i <= 0)) {
+    abort(sprintf("%s requires strictly positive SDs in both groups.", measure))
+  }
+  if (measure == "CVR" && any(inputs$m1i <= 0 | inputs$m2i <= 0)) {
+    abort("CVR requires strictly positive means in both groups.")
+  }
 }
 if (route == "rate_comparison") {
   check_integer_nonnegative(inputs$x1i, "x1i")
@@ -411,7 +417,7 @@ if (route == "change") {
 }
 
 analysis_scale_map <- c(
-  OR = "log", RR = "log", PETO = "log", IRR = "log", ROM = "log",
+  OR = "log", RR = "log", PETO = "log", IRR = "log", ROM = "log", VR = "log", CVR = "log",
   PLN = "log", IRLN = "log", MNLN = "log", SDLN = "log", CVLN = "log",
   PLO = "logit", ZCOR = "fisher-z", AS = "arcsine_difference", PAS = "arcsine",
   IRSD = "sqrt_difference", IRS = "sqrt"
@@ -522,8 +528,8 @@ if (route == "generic") {
       paste(.libPaths(), collapse = "; ")
     ))
   }
-  corrected_measures <- c("SMD", "SMDH", "ROM", "SMCC", "SMCR", "SMCRH")
-  variance_choice_measures <- c("SMD", "SMDH", "ROM", "COR", "UCOR")
+  corrected_measures <- c("SMD", "SMDH", "ROM", "VR", "CVR", "SMCC", "SMCR", "SMCRH")
+  variance_choice_measures <- c("SMD", "SMDH", "ROM", "VR", "CVR", "COR", "UCOR")
   escalc_args <- c(list(measure = measure), inputs)
   if (measure %in% corrected_measures) {
     escalc_args$correct <- parse_yes_no(get_opt("bias-correction"), "--bias-correction")

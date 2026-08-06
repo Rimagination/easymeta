@@ -1,0 +1,33 @@
+version: "1"
+mode: orient # orient | design | audit | reproduce
+question:
+  plain_language: ""
+  decision_context: ""
+  allowed_extrapolation: ""
+estimand:
+  target: ""
+  population_or_system: ""
+  comparison: ""
+  outcome: ""
+  time_and_scale: ""
+evidence_pattern:
+  data_level: aggregate # aggregate | ipd | raw_community_matrix | meta_level
+  row_unit: ""
+  independent_unit: ""
+  dependency_sources: []
+  likely_pattern: "" # overall_effect | effect_distribution | dependent_evidence | second_order | mechanism | prediction_threshold_space | no_pooling
+candidate_routes:
+  minimum_viable: ""
+  robust_alternative: ""
+  exploratory_extension: ""
+assumptions:
+  verified: []
+  uncertain: []
+  sensitivity_questions: []
+depth:
+  primary_sources_needed: false
+  data_code_check_needed: false
+  numeric_reproduction_needed: false
+decision:
+  pooling: undecided # pool | stratify | narrative_or_map | undecided
+  next_best_action: ""

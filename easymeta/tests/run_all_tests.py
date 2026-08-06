@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the P0 regression suite followed by all registered P1 scenarios."""
+"""Run contracts, P0/P1 regressions, ecology benchmarks, and source manifests."""
 
 from __future__ import annotations
 
@@ -12,7 +12,12 @@ TEST_DIR = Path(__file__).resolve().parent
 
 
 def main() -> int:
-    for script in ("run_contract_tests.py", "run_tests.py", "run_p1_tests.py"):
+    for script in (
+        "run_contract_tests.py",
+        "run_tests.py",
+        "run_p1_tests.py",
+        "run_ecology_benchmarks.py",
+    ):
         completed = subprocess.run(
             [sys.executable, str(TEST_DIR / script)],
             cwd=TEST_DIR.parent,
@@ -20,7 +25,11 @@ def main() -> int:
         )
         if completed.returncode != 0:
             return completed.returncode
-    print("PASS: complete contract, P0, and P1 medical/ecology meta-analysis skill regression suite")
+    print(
+        "PASS: complete contract, P0/P1, executable ecology benchmark, and "
+        "source-reproduction manifest "
+        "meta-analysis skill regression suite"
+    )
     return 0
 
 

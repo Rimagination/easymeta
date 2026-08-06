@@ -31,7 +31,7 @@
 
 选择路由：
 
-| 情形 | schema 1.2 触发器 | 普通 runner |
+| 情形 | route-schema 触发器 | 普通 runner |
 |---|---|---|
 | 原始物种×样点/样方矩阵，需先生成多样性指标 | `data.level=raw_community_matrix` 且 `raw_community_matrix=true` | 阻断 |
 | 已有 Bray–Curtis/Jaccard/turnover/nestedness/homogeneity/composition shift | `community_composition` | 阻断；先验证距离、配对和协方差契约 |
@@ -180,7 +180,7 @@ Hill 数只在构念一致时统一 q=0/1/2 下的分类、系统发育或功能
 - 区分“联合处理相对对照”的总效应和正式交互效应；前者不能证明协同/拮抗；
 - 同时报告单因子效应、联合效应和交互，避免只有交互符号而无生态量级。
 
-`Hong et al. 2022` 的生物多样性×全球变化资料适合作为“相关效应之差”路线基准；其 `ΔNBE` 必须按论文定义和协方差传播，不能因同属析因设计就自动套用四个原始单元的加法公式。[论文](https://pmc.ncbi.nlm.nih.gov/articles/PMC9300022/)；[数据](https://doi.org/10.6084/m9.figshare.16947451.v1)
+`Hong et al. 2022` 的生物多样性×全球变化资料适合作为“相关效应之差”路线和来源完整性反例；其 `ΔNBE` 必须按论文定义和协方差传播，不能因同属析因设计就自动套用四个原始单元的加法公式。Figshare v1 只有图表结果数据、没有核心效应/方差和代码，因此只能做结果表身份核对或现代重建，不能声称论文模型复现。[论文](https://pmc.ncbi.nlm.nih.gov/articles/PMC9300022/)；[数据](https://doi.org/10.6084/m9.figshare.16947451.v1)
 
 ## 7. 生态系统多功能性
 
@@ -237,6 +237,8 @@ biological_interpretation, reviewer, verification_status
 
 ## 10. 第二阶与 cross-meta 综合
 
+先读取通用 `second-order-meta.md`。本节只补充生态与生物多样性中的 estimand/尺度问题，不把该路线限制为植物生态。
+
 当输入是多个既有 Meta 分析、不同生态功能的 Meta 结果或一组互相重叠的综合时：
 
 1. 建立 `meta_review_id -> dataset_id -> primary_study_id -> outcome/contrast` 重叠图；
@@ -287,7 +289,8 @@ biological_interpretation, reviewer, verification_status
 5. `V`、随机结构和假设集合；
 6. 主模型、结构敏感性、失败模型和降级路径；
 7. 生态适用范围、尺度支持与不可外推区；
-8. 与 `plant-biodiversity-benchmark-casebook.md` 中最接近基准的能力对照。
+8. 与 `plant-biodiversity-benchmark-casebook.md` 中最接近基准的能力对照；
+9. 对应机器场景 ID、`test_type`、通过/拒绝 oracle 和 `source_replication_status`；合成 conceptual benchmark 不得写成论文复现。
 
 ## 14. 方法来源
 

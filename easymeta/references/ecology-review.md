@@ -118,7 +118,7 @@ CEE 与 James、Randall、Haddaway 的系统地图方法把地图定位为证据
 
 ### 4.1 植物与生物多样性专项 estimand
 
-下列输入不是“再选一个效应量代码”即可解决的问题。读取 `plant-biodiversity-specialist-routes.md`，设置 schema 1.2 触发器，复制并完成 `assets/biodiversity_contract_template.json`，运行 `python scripts/validate_biodiversity_contract.py <contract.json>`，并在生成经验证的 effect bundle 前阻断普通 runner：
+下列输入不是“再选一个效应量代码”即可解决的问题。读取 `plant-biodiversity-specialist-routes.md`，设置当前 route schema 的相应触发器，复制并完成 `assets/biodiversity_contract_template.json`，运行 `python scripts/validate_biodiversity_contract.py <contract.json>`，并在生成经验证的 effect bundle 前阻断普通 runner：
 
 - 原始物种×样点矩阵及 α/β/γ、Hill 数、turnover/nestedness；任何预计算的 Bray–Curtis/Jaccard/homogeneity/composition-shift 也触发 `community_composition`，不得因已有 `yi/vi` 绕过专项路由；
 - 分类、功能和系统发育多样性的联合响应；

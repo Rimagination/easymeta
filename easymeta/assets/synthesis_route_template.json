@@ -1,15 +1,16 @@
 {
-  "schema_version": "1.3",
+  "schema_version": "1.4",
   "task": {
     "product_type": "systematic_review",
     "domain": "medical",
-    "stage": "analysis",
+    "stage": "planning",
     "as_of_date": null,
     "decision_points": [
-      "effect_size",
-      "synthesis_model",
-      "r_implementation"
+      "evidence_synthesis_conduct",
+      "question_protocol"
     ],
+    "audit_targets": [],
+    "conversion_family": null,
     "topic_tags": [],
     "appraisal_tools": [],
     "certainty_frameworks": []
@@ -23,6 +24,7 @@
     "effect_structure": "independent",
     "dependence_topology": "independent",
     "dependency_sources": [],
+    "independent_cluster_count": null,
     "sampling_covariance_status": "not_needed_verified",
     "sampling_v_path": null,
     "ecology_contract_path": null

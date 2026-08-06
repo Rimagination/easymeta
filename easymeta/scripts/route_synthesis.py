@@ -40,7 +40,7 @@ from reference_gate import (
 EXIT_OK = 0
 EXIT_INVALID_INPUT = 1
 EXIT_INPUT_ERROR = 2
-SCHEMA_VERSION = "1.3"
+SCHEMA_VERSION = "1.4"
 
 ROUTES = {
     "aggregate_effect_meta",
@@ -77,6 +77,8 @@ TASK_FIELDS = {
     "stage",
     "as_of_date",
     "decision_points",
+    "audit_targets",
+    "conversion_family",
     "topic_tags",
     "appraisal_tools",
     "certainty_frameworks",
@@ -87,6 +89,7 @@ DATA_FIELDS = {
     "effect_structure",
     "dependence_topology",
     "dependency_sources",
+    "independent_cluster_count",
     "sampling_covariance_status",
     "sampling_v_path",
     "ecology_contract_path",
@@ -153,13 +156,16 @@ STAGES = {
     "audit",
 }
 DECISION_POINTS = {
+    "evidence_synthesis_conduct",
     "question_protocol",
     "search_selection",
     "study_report_linkage",
     "extraction",
     "effect_size",
+    "effect_conversion",
     "dependence",
     "synthesis_model",
+    "few_studies",
     "small_study_effects",
     "risk_of_bias",
     "certainty",
@@ -169,6 +175,17 @@ DECISION_POINTS = {
     "source_governance",
     "ai_assistance",
     "benchmark_audit",
+    "source_reproduction",
+    "review_update",
+    "method_claim_audit",
+}
+AUDIT_TARGETS = {"conduct", "reporting", "effect_model", "software", "appraisal", "citation"}
+CONVERSION_FAMILIES = {
+    "unit_conversion",
+    "ratio_log_transform",
+    "correlation_bridge",
+    "response_ratio_to_smd",
+    "other",
 }
 TOPIC_TAGS = {"plant_ecology", "biodiversity", "community_ecology", "restoration"}
 APPRAISAL_TOOLS = {"rob2", "robins_i", "robins_e", "quadas3", "jbi", "feat", "ceesat", "mates"}
@@ -374,8 +391,24 @@ def validate_input(payload: Any) -> tuple[Mapping[str, Any] | None, list[Issue]]
         else:
             task_values["as_of_date"] = None
 
+        raw_conversion_family = task.get("conversion_family")
+        if raw_conversion_family is not None and (
+            not isinstance(raw_conversion_family, str)
+            or raw_conversion_family not in CONVERSION_FAMILIES
+        ):
+            issues.append(
+                Issue(
+                    "unsupported_value",
+                    "task.conversion_family",
+                    "must be null or one of: " + ", ".join(sorted(CONVERSION_FAMILIES)),
+                )
+            )
+        else:
+            task_values["conversion_family"] = raw_conversion_family
+
         list_fields = {
             "decision_points": (DECISION_POINTS, False),
+            "audit_targets": (AUDIT_TARGETS, True),
             "topic_tags": (TOPIC_TAGS, True),
             "appraisal_tools": (APPRAISAL_TOOLS, True),
             "certainty_frameworks": (CERTAINTY_FRAMEWORKS, True),
@@ -401,6 +434,8 @@ def validate_input(payload: Any) -> tuple[Mapping[str, Any] | None, list[Issue]]
                 task_values[field] = list(value)
 
         decisions = task_values.get("decision_points", [])
+        audit_targets = task_values.get("audit_targets", [])
+        conversion_family = task_values.get("conversion_family")
         appraisal_tools = task_values.get("appraisal_tools", [])
         certainty_frameworks = task_values.get("certainty_frameworks", [])
         if "risk_of_bias" in decisions and not appraisal_tools:
@@ -411,6 +446,14 @@ def validate_input(payload: Any) -> tuple[Mapping[str, Any] | None, list[Issue]]
             issues.append(Issue("missing_value", "task.certainty_frameworks", "must declare at least one framework for a certainty decision"))
         if "certainty" not in decisions and certainty_frameworks:
             issues.append(Issue("contradiction", "task.certainty_frameworks", "must be empty unless certainty is a requested decision point"))
+        if (task_values.get("stage") == "audit" or "method_claim_audit" in decisions) and not audit_targets:
+            issues.append(Issue("missing_value", "task.audit_targets", "must declare at least one audit target for audit work"))
+        if task_values.get("stage") != "audit" and "method_claim_audit" not in decisions and audit_targets:
+            issues.append(Issue("contradiction", "task.audit_targets", "must be empty unless stage is audit or method_claim_audit is requested"))
+        if "effect_conversion" in decisions and conversion_family is None:
+            issues.append(Issue("missing_value", "task.conversion_family", "must declare the proposed conversion family"))
+        if "effect_conversion" not in decisions and conversion_family is not None:
+            issues.append(Issue("contradiction", "task.conversion_family", "must be null unless effect_conversion is requested"))
 
     eligible: bool | None = None
     reason: str | None = None
@@ -463,6 +506,7 @@ def validate_input(payload: Any) -> tuple[Mapping[str, Any] | None, list[Issue]]
     effect_structure: str | None = None
     dependence_topology: str | None = None
     dependency_sources: list[str] = []
+    independent_cluster_count: int | None = None
     covariance_status: str | None = None
     sampling_v_path: str | None = None
     ecology_contract_path: str | None = None
@@ -540,6 +584,20 @@ def validate_input(payload: Any) -> tuple[Mapping[str, Any] | None, list[Issue]]
                 )
             else:
                 dependency_sources = list(raw_sources)
+
+        raw_cluster_count = data.get("independent_cluster_count")
+        if raw_cluster_count is not None and (
+            type(raw_cluster_count) is not int or raw_cluster_count < 1
+        ):
+            issues.append(
+                Issue(
+                    "unsupported_value",
+                    "data.independent_cluster_count",
+                    "must be a positive integer or null",
+                )
+            )
+        elif isinstance(raw_cluster_count, int):
+            independent_cluster_count = raw_cluster_count
 
         raw_covariance_status = data.get("sampling_covariance_status")
         if (
@@ -664,6 +722,29 @@ def validate_input(payload: Any) -> tuple[Mapping[str, Any] | None, list[Issue]]
                 )
             )
 
+    analysis_decisions = {
+        "effect_size",
+        "effect_conversion",
+        "dependence",
+        "synthesis_model",
+        "few_studies",
+        "small_study_effects",
+        "r_implementation",
+    }
+    if (
+        level == "aggregate"
+        and task_values.get("stage") in {"analysis", "interpretation", "reporting", "audit"}
+        and analysis_decisions.intersection(task_values.get("decision_points", []))
+        and independent_cluster_count is None
+    ):
+        issues.append(
+            Issue(
+                "missing_value",
+                "data.independent_cluster_count",
+                "is required for aggregate analysis decisions and must count independent sampling clusters, not effect rows",
+            )
+        )
+
     trigger_values: dict[str, bool] = {}
     if triggers is not None:
         for name in SPECIALIST_HANDOFFS:
@@ -752,6 +833,9 @@ def validate_input(payload: Any) -> tuple[Mapping[str, Any] | None, list[Issue]]
         for name in ECOLOGY_CONTRACT_TRIGGERS
         if trigger_values.get(name) is True
     )
+    if task_domain in ecology_domains and trigger_values.get("one_stage_longitudinal") is True:
+        ecology_triggers_active.append("one_stage_longitudinal")
+        ecology_triggers_active.sort()
     if ecology_triggers_active and ecology_contract_path is None:
         issues.append(
             Issue(
@@ -788,6 +872,7 @@ def validate_input(payload: Any) -> tuple[Mapping[str, Any] | None, list[Issue]]
         "effect_structure": effect_structure,
         "dependence_topology": dependence_topology,
         "dependency_sources": dependency_sources,
+        "independent_cluster_count": independent_cluster_count,
         "covariance_status": covariance_status,
         "sampling_v_path": sampling_v_path,
         "ecology_contract_path": ecology_contract_path,

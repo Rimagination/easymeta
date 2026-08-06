@@ -159,6 +159,9 @@ def test_biodiversity_contract(work: Path) -> None:
 def complete_route_task(route: dict, *, domain: str = "medical") -> dict:
     route["task"]["domain"] = domain
     route["task"]["as_of_date"] = "2026-08-03"
+    route["task"]["stage"] = "analysis"
+    route["task"]["decision_points"] = ["effect_size", "synthesis_model", "r_implementation"]
+    route["data"]["independent_cluster_count"] = 12
     return route
 
 
@@ -256,6 +259,13 @@ def test_route_contract_gate(work: Path) -> None:
     if result["required_handoff"] != ["dependence_structure_specialist"]:
         raise Failure("unknown dependence topology was not blocked")
 
+    reproduction = json.loads((ROOT / "assets" / "synthesis_route_template.json").read_text(encoding="utf-8"))
+    complete_route_task(reproduction, domain="ecology")
+    reproduction["task"]["decision_points"] = ["source_reproduction"]
+    routed = json.loads(run([PYTHON, script, "-"], stdin=json.dumps(reproduction)).stdout)
+    if "references/source-reproduction.md" not in routed["required_references"]:
+        raise Failure("paper reproduction did not load the source-reproduction contract")
+
 
 def write_csv(path: Path, fields: list[str], rows: list[dict[str, str]]) -> None:
     with path.open("w", encoding="utf-8", newline="") as handle:
@@ -318,6 +328,108 @@ def test_governance_contracts(work: Path) -> None:
     run([PYTHON, validator, appraisal_path])
 
 
+def test_ecology_benchmark_contract(work: Path) -> None:
+    validator = ROOT / "scripts" / "validate_ecology_benchmarks.py"
+    suite_path = ROOT / "tests" / "ecology_benchmark_scenarios.json"
+    result = run([PYTHON, validator, suite_path])
+    validated = json.loads(result.stdout)
+    if validated.get("case_count") != 24 or validated.get("family_count") != 8:
+        raise Failure(f"unexpected ecology benchmark coverage: {validated}")
+    if validated.get("verified_source_replications") != 0:
+        raise Failure("conceptual ecology suite falsely claimed a verified source replication")
+
+    suite = json.loads(suite_path.read_text(encoding="utf-8"))
+    false_replication = copy.deepcopy(suite)
+    false_replication["cases"][0]["test_type"] = "exact_reproduction"
+    path = work / "false-replication.json"
+    write_json(path, false_replication)
+    result = run([PYTHON, validator, path], expected=1)
+    if "cannot claim source reproduction" not in result.stderr:
+        raise Failure("synthetic fixture could claim exact source reproduction")
+
+    missing_rejections = copy.deepcopy(suite)
+    missing_rejections["cases"] = [
+        case
+        for case in missing_rejections["cases"]
+        if case["family"] != "variability" or case["expected"] == "pass"
+    ]
+    path = work / "missing-family-rejections.json"
+    write_json(path, missing_rejections)
+    result = run([PYTHON, validator, path], expected=1)
+    if "minimum" not in result.stderr and "two reject" not in result.stderr:
+        raise Failure("benchmark family could omit its rejection coverage")
+
+
+def test_source_reproduction_contract(work: Path) -> None:
+    validator = ROOT / "scripts" / "validate_source_reproductions.py"
+    manifest_path = ROOT / "tests" / "source_reproduction_cases.json"
+    validated = json.loads(run([PYTHON, validator, manifest_path]).stdout)
+    expected_counts = {
+        "case_count": 4,
+        "verified_source_reproductions": 3,
+        "blocked_source_cases": 1,
+    }
+    for field, expected in expected_counts.items():
+        if validated.get(field) != expected:
+            raise Failure(f"source reproduction {field} drifted from {expected}: {validated}")
+
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    cases_by_id = {case["id"]: case for case in manifest["cases"]}
+    expected_verified = {"cheng-2024", "goncalves-2025", "keck-2025"}
+    actual_verified = {
+        case["id"]
+        for case in manifest["cases"]
+        if case["verification_status"] == "verified"
+    }
+    if not expected_verified <= actual_verified:
+        raise Failure("source reproduction layer lost a named verified paper")
+    keck = cases_by_id["keck-2025"]
+    if keck["artifacts"][0]["checksums"]["sha256"] != (
+        "63ee7b549a8f29452144249c6b56ccd274b0917459cae1737709d67a7a35e0d8"
+    ):
+        raise Failure("Keck v1.0 archive identity drifted")
+    if len(keck["oracle"]["assertions"]) != 22:
+        raise Failure("Keck targeted reproduction lost its 22 frozen numerical/boolean assertions")
+    runner_text = (ROOT / "tests" / "run_source_reproductions.py").read_text(encoding="utf-8")
+    if "--require-frozen-output" not in runner_text:
+        raise Failure("source runner cannot enforce the frozen output receipt")
+
+    false_verification = copy.deepcopy(manifest)
+    verified = next(case for case in false_verification["cases"] if case["verification_status"] == "verified")
+    verified["verification"]["frozen_output_sha256"] = "not-a-hash"
+    path = work / "false-source-verification.json"
+    write_json(path, false_verification)
+    result = run([PYTHON, validator, path], expected=1)
+    if "frozen output SHA-256" not in result.stderr:
+        raise Failure("verified source reproduction could omit its frozen output hash")
+
+    changed_adapter = copy.deepcopy(manifest)
+    changed_adapter["cases"][0]["execution"]["adapter_sha256"] = "0" * 64
+    path = work / "changed-source-adapter.json"
+    write_json(path, changed_adapter)
+    result = run([PYTHON, validator, path], expected=1)
+    if "adapter SHA-256 does not match" not in result.stderr:
+        raise Failure("source reproduction accepted an adapter hash that did not match its executable")
+
+    floating = copy.deepcopy(manifest)
+    floating["cases"][0]["source_release"]["version"] = "latest"
+    path = work / "floating-source-version.json"
+    write_json(path, floating)
+    result = run([PYTHON, validator, path], expected=1)
+    if "floating source version" not in result.stderr:
+        raise Failure("source reproduction accepted a floating data version")
+
+    false_pass = copy.deepcopy(manifest)
+    blocked = next(case for case in false_pass["cases"] if case["verification_status"] == "blocked")
+    blocked["verification_status"] = "verified"
+    blocked["verification"]["result"] = "pass"
+    blocked["verification"]["frozen_output_sha256"] = "0" * 64
+    path = work / "blocked-claimed-pass.json"
+    write_json(path, false_pass)
+    result = run([PYTHON, validator, path], expected=1)
+    if "disabled execution" not in result.stderr:
+        raise Failure("a blocked source conflict could be relabeled as verified")
+
 def test_distilled_assets() -> None:
     registry = (ROOT / "references" / "source-registry.md").read_text(encoding="utf-8")
     reference_routes = json.loads((ROOT / "assets" / "reference_routes.json").read_text(encoding="utf-8"))
@@ -326,7 +438,13 @@ def test_distilled_assets() -> None:
     for token in (
         "CEESAT-2.2", "CEE-PUBBIAS-LIVING", "2041-210X.70156", "2041-210X.13760",
         "s11121-021-01246-3", "2041-210X.70155", "2041-210X.13682",
-        "2041-210X.13714", "rec.70441",
+        "2041-210X.13714", "rec.70441", "COCHRANE-UPDATE-6.5",
+        "COCHRANE-OVERVIEWS-6.5", "EFFECT-CONVERSION-2026", "QUALITY-SCORE-1999",
+        "COCHRANE-MISSING-13",
+        "BENCH-ECOLET-ATKINSON-2022", "BENCH-NCOMMS-CHENG-2024",
+        "BENCH-NATURE-GONCALVES-2025", "BENCH-ECOLET-HONG-2022",
+        "BENCH-NCOMMS-LEFCHECK-2015", "BENCH-NATURE-ISBELL-2015",
+        "BENCH-NATURE-HOOPER-2012",
     ):
         if token not in registry:
             raise Failure(f"source registry is missing {token}")
@@ -341,8 +459,12 @@ def test_distilled_assets() -> None:
         if token not in casebook:
             raise Failure(f"casebook is missing {token}")
     for token in (
-        'schema_version: "1.3"', "community_composition", "ecology_contract_path",
+        'schema_version: "1.4"', "community_composition", "ecology_contract_path",
+        "independent_cluster_count", "audit_targets", "conversion_family",
+        "references/second-order-meta.md",
         "assets/reference_routes.json", "reference_receipt_template.json",
+        "benchmark_suite_path", "source_replication_status",
+        "source_reproduction_manifest_path", "numerical_oracle_locator",
         'version: "2.2"', "first_meta_analysis_in_paper", "ai_stage_run_id",
         "binary_publication_bias_verdict_forbidden",
     ):
@@ -356,8 +478,13 @@ def main() -> int:
         test_biodiversity_contract(work)
         test_route_contract_gate(work)
         test_governance_contracts(work)
+        test_ecology_benchmark_contract(work)
+        test_source_reproduction_contract(work)
         test_distilled_assets()
-    print("PASS: ecology, reporting-governance, and living-source contract tests")
+    print(
+        "PASS: ecology, reporting-governance, living-source, and "
+        "paper-reproduction contract tests"
+    )
     return 0
 
 

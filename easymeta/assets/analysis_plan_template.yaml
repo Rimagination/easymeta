@@ -1,6 +1,6 @@
-schema_version: "1.3"
+schema_version: "1.4"
 template_status: working_template_not_official
-migration_note: "v1.3 adds the P0-6 reference-routing contract and receipt hard gate. Preserve frozen v1.2 plans and record migration as a protocol change."
+migration_note: "v1.4 adds decision-point gates, audit targets, conversion families, and an independent-cluster count for sparse-evidence routing. Preserve frozen v1.3 plans and record migration as a protocol change."
 
 review:
   title: ""
@@ -39,11 +39,13 @@ question:
         sampling_coverage: null
 
 synthesis_route:
-  schema_version: "1.3"
+  schema_version: "1.4"
   input_template_path: assets/synthesis_route_template.json
   completed_plan_path: ""
   router_path: scripts/route_synthesis.py
   route_output_path: ""
+  audit_targets: []  # conduct | reporting | effect_model | software | appraisal | citation
+  conversion_family: null  # to/from Pearson r or another correlation measure => correlation_bridge; use other only if no named family fits
   selected_route: ""  # aggregate_effect_meta | dependent_effect_meta | specialist_route | no_pooling
   runner_allowed: null
   stop_reason: ""
@@ -74,6 +76,7 @@ synthesis_route:
     effect_structure: independent
     dependence_topology: independent  # independent | nested | one_way | crossed | mixed | unknown
     dependency_sources: []
+    independent_cluster_count: null  # count independent sampling clusters, never effect rows
     sampling_covariance_status: not_needed_verified
     sampling_v_path: null
     ecology_contract_path: null
@@ -209,8 +212,15 @@ extraction:
     - conversion_id: ""
       source_format: ""
       target_format: ""
+      source_estimand: ""
+      target_estimand: ""
+      exact_or_approximate: ""  # exact | approximate | unknown_stop
       formula_or_code_path: ""
-      assumptions: ""
+      assumption_set_id: ""
+      assumptions: []
+      variance_or_covariance_propagation: ""
+      sensitivity_analysis: ""
+      human_verified: false
   validator_warning_disposition_path: ""
   duplicate_reconciliation:
     reviewer_1_path: ""
@@ -359,6 +369,16 @@ synthesis:
     plant_biodiversity_routes:
       guidance_path: references/plant-biodiversity-specialist-routes.md
       benchmark_casebook_path: references/plant-biodiversity-benchmark-casebook.md
+      benchmark_suite_path: tests/ecology_benchmark_scenarios.json
+      benchmark_validator_path: scripts/validate_ecology_benchmarks.py
+      benchmark_runner_path: tests/run_ecology_benchmarks.py
+      benchmark_test_type: ""  # exact_reproduction | conceptual_reimplementation | router_rejection | modern_reanalysis
+      source_replication_status: pending  # pending | verified | not_applicable; synthetic fixtures can never be verified source replications
+      source_reproduction_manifest_path: tests/source_reproduction_cases.json
+      source_reproduction_reference_path: references/source-reproduction.md
+      source_asset_root_env: EASYMETA_SOURCE_REPRO_ROOT
+      source_reproduction_scope: ""  # exact | targeted | modern_reanalysis | blocked; state the first and last reproduced stage
+      numerical_oracle_locator: ""  # table/figure/code locator plus scale and tolerance; never only 'same significance'
       ordinary_runner_blocked_scopes:
         - raw_community_matrix
         - multidimensional_biodiversity
@@ -369,6 +389,11 @@ synthesis:
         - derived_recovery_stability
         - second_order_meta
       shared_control_scope: "May use dependent_effect_meta only when effect IDs, an audited sampling V, independent clusters, and the random-effects structure are explicit."
+    second_order_route:
+      guidance_path: references/second-order-meta.md
+      overlap_map_path: ""
+      target_product: ""  # overview | umbrella_review | second_order_quantitative | primary_study_reanalysis
+      quality_score_weighting_forbidden: true
     unsupported_or_nonidentifiable_rule: "Stop, preserve the failed plan, and obtain specialist review; do not fall back silently to an ordinary model."
 
 reporting:

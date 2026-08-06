@@ -13,6 +13,8 @@ EasyMeta 是一个面向医学、公共卫生、生态学、环境科学和生�
 
 项目强调“让 Meta 分析更易执行，但不降低方法标准”。每个关键判断都尽量保留来源、假设、版本、偏离和验证记录；同一研究内的多个效应、共享对照、重复时间点、空间或系统发育相关性不会被默认为相互独立。结果适合用于协议设计、数据提取、统计分析、方法审计和论文报告，但仍需要领域专家作出最终判断。
 
+验证方面，EasyMeta 已完成 8 类、24 个真实论文方法锚定的合成生态 benchmark，并另建论文级来源复现层。来源层把版本、许可状态、远端校验值、本地 SHA-256、执行适配器、R 环境和逐项数值 oracle 绑定在同一清单中；当前 Cheng 2024、Gonçalves-Souza 2025 与 Keck 2025 的定向模型通过，Atkinson 2022 因公开数据与论文结果冲突被明确阻断。合成场景、定向复现、现代重分析和整篇 exact reproduction 始终分开报告。
+
 ## 一分钟开始
 
 ### 使用 Agent
@@ -83,8 +85,11 @@ EasyMeta 还会主动拒绝以下做法：
 - 不把同一研究的多个效应量假设为独立，也不把共享对照复制成额外信息。
 - 不合并一个只叫作 “biodiversity” 的含糊结局。
 - 不根据异质性检验的 P 值选择共同/固定效应或随机效应模型。
+- 不用“至少 4 项研究”一类通用阈值放行 Meta；分析阶段必须按独立抽样簇计数，少研究时自动加载保守推断规则。
 - 不用漏斗图、Egger 检验、trim-and-fill 或单一选择模型给出二元发表偏倚结论。
+- 不为增加可合并行数而无条件转换效应量，也不用 observation-level 随机效应冒充 sampling covariance。
 - 不把风险偏倚、证据确定性、综述可靠性和报告完整性相加为“质量总分”。
+- 不按质量总分给研究或综述加权，也不把追加新效应行当作完整的综述更新。
 - 不因为 Nature、Science 或其他高影响力期刊使用了某个模型，就把它变成通用默认设置。
 - 不替代纳入排除、数据提取、偏倚评价、临床解释或生态解释中的人工复核。
 - 不提供个人医疗诊断或治疗建议。
@@ -92,7 +97,7 @@ EasyMeta 还会主动拒绝以下做法：
 ## 它如何工作
 
 1. **定义问题**：明确产品类型、PICO/PECO、estimand、结局、尺度、时间范围和决策语境。
-2. **路由资料**：由 `task.domain`、`task.stage`、decision points、数据层级、依赖来源和专项触发器匹配 `reference_routes.json`，生成最小必读文件与 source ID 集合。
+2. **路由资料**：由 `task.domain`、`task.stage`、decision points、数据层级、独立簇数、依赖来源和专项触发器匹配 `reference_routes.json`，生成最小必读文件与 source ID 集合。
 3. **验证阅读记录**：用 plan 哈希绑定回执，核对本地文件字节、章节定位、决策映射和 living guidance 的当次里程碑检查；未通过时普通 runner 保持关闭。
 4. **建立证据集**：设计检索与筛选，关联研究和报告，完成双人提取、裁决与完整性检查。
 5. **构造效应量**：统一方向、单位和分析尺度，记录转换、独立抽样簇、抽样协方差 `V` 和真实效应结构。
@@ -101,7 +106,7 @@ EasyMeta 还会主动拒绝以下做法：
 
 ### 资料怎样抵达正确决策点
 
-EasyMeta 不把书籍全文塞进 `SKILL.md`，也不要求每次读取全部资料。第一次运行路由器时，它按机器可读规则取并集并去重：普通医学分析只得到医学、效应量和 R 实现资料；诊断任务额外得到 Cochrane DTA、QUADAS-3 与专项模型资料；原始群落矩阵转向生态、生物多样性、Hill 数和尺度资料；共享对照则转向复杂设计、抽样协方差与依赖推断。回归测试同时断言无关医学或生态资料不会混入这些集合。
+EasyMeta 不把书籍全文塞进 `SKILL.md`，也不要求每次读取全部资料。第一次运行路由器时，它按机器可读规则取并集并去重：完整系统综述在任何阶段都会保留 evidence-synthesis core；独立簇不超过 10 时自动命中少研究门；效应转换按 `conversion_family` 区分单位/对数/相关桥接和生态 response-ratio 转换；教程审计按 `audit_targets` 区分 conduct、reporting、effect model、software、appraisal 和 citation；旧综述更新按医学或环境领域加载不同实施来源；`meta_level` 输入进入通用二阶综合路线；`source_reproduction` 则强制加载版本/许可/哈希/oracle 合同。回归测试同时断言应加载和不应加载的资料。
 
 ```powershell
 # 1. 完成模板；task.as_of_date 写实际核验日期
@@ -130,7 +135,7 @@ cd easymeta
 python easymeta/tests/run_contract_tests.py
 ```
 
-完整测试还需要 R、[`metafor`](https://wviechtb.github.io/metafor/)、[`clubSandwich`](https://jepusto.github.io/clubSandwich/) 和用于核验 route contract 的 [`jsonlite`](https://cran.r-project.org/package=jsonlite)。如果 `Rscript` 不在 `PATH`，设置 `R_SCRIPT`；如果 R 包位于自定义库，设置 `META_TEST_R_LIBRARY`：
+完整测试还需要 R、[`metafor`](https://wviechtb.github.io/metafor/)、[`clubSandwich`](https://jepusto.github.io/clubSandwich/) 和用于核验 route contract 的 [`jsonlite`](https://cran.r-project.org/package=jsonlite)；显式运行三篇论文来源复现时还需要 `readxl`、`glmmTMB` 与 `emmeans`。如果 `Rscript` 不在 `PATH`，设置 `R_SCRIPT`；如果 R 包位于自定义库，设置 `META_TEST_R_LIBRARY`：
 
 ```powershell
 $env:R_SCRIPT = 'path\to\Rscript.exe'
@@ -138,7 +143,16 @@ $env:META_TEST_R_LIBRARY = 'path\to\R-library'
 python easymeta/tests/run_all_tests.py
 ```
 
-当前版本覆盖 P0-1 至 P0-6，并保留 31 个 P1 端到端案例；P0-6 额外测试医学诊断、原始群落矩阵、共享对照、错误哈希、过期 living guidance 和路径穿越。本次验证环境使用 R 4.5.3、`metafor 5.0.1`、`clubSandwich 0.7.0` 和 `jsonlite 2.0.0`。这些测试证明代码和数据合同按预期工作，不构成对任意真实研究的科学有效性认证。
+默认完整回归不会下载或运行第三方论文数据。论文级来源层需先在项目自有目录准备外部文件，再显式执行：
+
+```powershell
+$env:EASYMETA_SOURCE_REPRO_ROOT = 'path\to\source-reproductions\raw'
+python easymeta/scripts/validate_source_reproductions.py
+python easymeta/scripts/materialize_source_reproductions.py --case cheng-2024 --case goncalves-2025 --case keck-2025 --require-all
+python easymeta/tests/run_source_reproductions.py --case cheng-2024 --case goncalves-2025 --case keck-2025 --require-all --require-frozen-output
+```
+
+当前版本覆盖 P0-1 至 P0-6、31 个 P1 端到端案例，以及 8 个生态 benchmark 家族的 24 个可执行 conceptual/rejection 场景。生态合成套件内部仍为 `verified_source_replications=0`；独立的来源复现清单目前为 3 个 `verified targeted_reproduction` 和 1 个 `blocked modern_reanalysis`。本次验证环境使用 R 4.5.3、`metafor 5.0.1`、`clubSandwich 0.7.0`、`readxl 1.4.5`、`glmmTMB 1.1.14`、`emmeans 2.0.3` 和 `jsonlite 2.0.0`。这些通过只适用于清单声明的模型边界，不构成整篇论文、所有生态 Meta 或任意真实研究的科学有效性认证。
 
 项目结构：
 
@@ -149,7 +163,7 @@ easymeta/
 ├── assets/                  # 分析计划、资料路由/回执、提取表和机器可读合同
 ├── references/              # 医学、生态、模型、报告和来源方法库
 ├── scripts/                 # Python 校验器与 R 分析器
-└── tests/                   # 合同、P0 与 P1 端到端测试
+└── tests/                   # 合同、P0/P1、生态 benchmark 与论文来源复现
 ```
 
 ## 项目文档
@@ -159,7 +173,13 @@ easymeta/
 - [`medical-review.md`](easymeta/references/medical-review.md)：医学与公共卫生路线
 - [`ecology-review.md`](easymeta/references/ecology-review.md)：生态、环境和系统地图路线
 - [`effect-size-and-models.md`](easymeta/references/effect-size-and-models.md)：效应量、依赖、异质性和模型
+- [`meta-analysis-decision-gates.md`](easymeta/references/meta-analysis-decision-gates.md)：少研究、效应转换、综述更新和错误方法说法的快速决策门
+- [`second-order-meta.md`](easymeta/references/second-order-meta.md)：umbrella review、一级研究重叠与二阶定量综合
 - [`plant-biodiversity-specialist-routes.md`](easymeta/references/plant-biodiversity-specialist-routes.md)：植物与生物多样性专项路线
+- [`plant-biodiversity-benchmark-casebook.md`](easymeta/references/plant-biodiversity-benchmark-casebook.md)：19 个论文锚点、L0–L6 能力门及机器验收状态
+- [`ecology_benchmark_scenarios.json`](easymeta/tests/ecology_benchmark_scenarios.json)：8 个生态案例族的 24 个正向/拒绝场景
+- [`source-reproduction.md`](easymeta/references/source-reproduction.md)：版本/哈希/许可/数值 oracle、PASS/BLOCKED/NOT_RUN 与执行边界
+- [`source_reproduction_cases.json`](easymeta/tests/source_reproduction_cases.json)：论文级来源复现的机器真源清单
 - [`source-registry.md`](easymeta/references/source-registry.md)：核心来源的版本、适用范围、许可和更新治理
 - [`reference_routes.json`](easymeta/assets/reference_routes.json)：任务字段到最小必读文件、source ID 与 living-source 标记的机器路由
 - [`reference_receipt_template.json`](easymeta/assets/reference_receipt_template.json)：绑定 plan、章节、决策与来源核验记录的 P0-6 回执模板
@@ -175,6 +195,7 @@ EasyMeta 不是把某一本书或某一篇论文改写成提示词，而是把�
 ### 系统综述实施与报告
 
 - [Cochrane Handbook for Systematic Reviews of Interventions, v6.5 (2024)](https://www.cochrane.org/authors/handbooks-and-manuals/handbook/current)：健康干预综述的范围、检索、提取、效应量、综合、偏倚和解释。
+- [Cochrane Handbook Chapter IV: Updating a review](https://www.cochrane.org/authors/handbooks-and-manuals/handbook/current/chapter-iv) 与 [Chapter V: Overviews of Reviews](https://www.cochrane.org/authors/handbooks-and-manuals/handbook/current/chapter-v)：旧综述更新、overview 产品选择和一级研究重叠处理。
 - [JBI Manual for Evidence Synthesis](https://synthesismanual.jbi.global/)（在线版与 2024 edition）：多类型健康证据综合、协议、双人评价与提取。
 - [Cochrane Handbook for Systematic Reviews of Diagnostic Test Accuracy, v2.0 (2023)](https://www.cochrane.org/authors/handbooks-and-manuals/handbook-systematic-reviews-diagnostic-test-accuracy)：诊断准确性综述的问题、数据、偏倚和综合方法。
 - [CEE Guidelines and Standards for Evidence Synthesis in Environmental Management, v5.1](https://environmentalevidence.org/information-for-authors/guidelines-for-authors/)：环境系统综述与系统地图的实施标准；网页更新按 living guidance 管理。
@@ -188,6 +209,7 @@ EasyMeta 不是把某一本书或某一篇论文改写成提示词，而是把�
 - Gurevitch et al. (2018), [*Meta-analysis and the science of research synthesis*](https://www.nature.com/articles/nature25753)：跨学科研究综合的原则与局限。
 - Nakagawa et al. (2023), [*Quantitative evidence synthesis: a practical guide on meta-analysis, meta-regression, and publication bias*](https://doi.org/10.1186/s13750-023-00301-6)：生态 Meta 的多层、多变量、依赖和高级综合。
 - Hedges, Gurevitch & Curtis (1999), [response ratio 方法](https://doi.org/10.1890/0012-9658%281999%29080%5B1150%3ATMAORR%5D2.0.CO%3B2)，以及 Lajeunesse 关于[相关与多组 response ratio](https://doi.org/10.1890/11-0423.1)和[小样本偏倚校正](https://doi.org/10.1890/14-2402.1)的研究：生态效应量及其抽样方差。
+- Lajeunesse (2026), [*Converting and Constructing Effect Sizes With the Response Ratio*](https://doi.org/10.1111/ele.70335)：新 response-ratio 转换路线；EasyMeta 要求完整公式、适用域和方差传播，不将其视为通用恒等式。
 - Pustejovsky & Tipton (2022), [correlated and hierarchical effects with CRVE](https://doi.org/10.1007/s11121-021-01246-3)：CR2、小样本自由度和相关—层级效应工作模型。
 - Nakagawa et al. (2022), [publication-bias methods for ecology and evolution](https://doi.org/10.1111/2041-210X.13724)：高异质性和非独立证据中的小研究效应与敏感性分析。
 - Williams et al. (2025), [dependent effect sizes simulation study](https://doi.org/10.1111/2041-210X.70156)，以及 Yang et al. (2025), [pluralistic heterogeneity reporting](https://doi.org/10.1111/2041-210X.70155)：依赖结构、方差分量和多视角异质性报告。
@@ -208,6 +230,7 @@ EasyMeta 不是把某一本书或某一篇论文改写成提示词，而是把�
 
 - [RoB 2](https://www.riskofbias.info/welcome/rob-2-0-tool/current-version-of-rob-2)、[ROBINS-I / ROBINS-E](https://www.riskofbias.info/welcome/home)、[QUADAS-3](https://www.bristol.ac.uk/population-health-sciences/projects/quadas/quadas-3/) 与 [JBI Critical Appraisal Tools](https://jbi.global/critical-appraisal-tools)：按研究设计选择结果层面的偏倚评价工具。
 - [GRADE Book](https://book.gradepro.org/) 与 [Cochrane Handbook Chapter 14](https://training.cochrane.org/handbook/current/chapter-14)：按关键结局评价证据确定性，而不是生成研究质量总分。
+- Jüni et al. (1999), [*The Hazards of Scoring the Quality of Clinical Trials for Meta-analysis*](https://doi.org/10.1001/jama.282.11.1054)：任意质量总分和质量加权的风险边界。
 - [CEESAT](https://environmentalevidence.org/ceeder/about-ceesat/)、[MATES](https://doi.org/10.1016/j.envint.2025.109935) 与 [FEAT](https://doi.org/10.1186/s13750-022-00264-0)：分别用于环境综述可靠性、Meta 分析报告完整性和 critical-appraisal 方法设计；三者不能互换。
 - [Cochrane、Campbell、JBI 与 CEE 的 AI 使用立场声明（2025）](https://doi.org/10.1186/s13750-025-00374-5)及 [CEE AI reporting guidance](https://environmentalevidence.org/artificial-intelligence-reporting-guidance/)：人类责任、验证、提示词、参数、错误、隐私与协议偏离记录。
 
@@ -215,10 +238,10 @@ EasyMeta 不是把某一本书或某一篇论文改写成提示词，而是把�
 
 [`plant-biodiversity-benchmark-casebook.md`](easymeta/references/plant-biodiversity-benchmark-casebook.md) 收录 19 篇植物生态与生物多样性代表性研究，用于检验 EasyMeta 能否重建真实高影响研究中的 estimand、尺度、依赖结构和解释边界。casebook 是方法路由与边界测试，不等同于逐篇下载数据、重跑模型或复现论文结果，也不构成通用方法规范。
 
-其中已进入核心来源登记的三篇 Nature 压力测试论文是：
+核心来源登记包括三篇 Nature 总体压力测试，以及首批机器 benchmark 对应的 Atkinson、Cheng、Gonçalves-Souza、Hong、Lefcheck、Isbell 和 Hooper 案例。三篇 Nature 总体压力测试是：
 
 - Chen et al. (2025), [plant diversity effects on productivity](https://www.nature.com/articles/s41586-024-08407-8)
 - Keck et al. (2025), [global human impact on biodiversity](https://www.nature.com/articles/s41586-025-08752-2)
 - Shaw et al. (2025), [global genetic diversity loss](https://www.nature.com/articles/s41586-024-08458-x)
 
-对这些论文，EasyMeta 分开记录“原论文实际采用的方法”和“按当前资料进行的方法审计”，不会因为发表期刊或影响力而继承其默认设置。
+对这些论文，EasyMeta 分开记录“原论文实际采用的方法”和“按当前资料进行的方法审计”，不会因为发表期刊或影响力而继承其默认设置。当前 24 个机器场景使用合成最小 fixture，明确属于 conceptual reimplementation/router rejection；其中 Keck 2025 已在独立来源清单中另行冻结 Zenodo v1.0、作者代码、环境记录与三组模型 oracle，并升级为 `verified targeted_reproduction`。这不改变合成套件自身的零来源复现计数。

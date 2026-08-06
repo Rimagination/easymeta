@@ -1,0 +1,501 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-08-05",
+  "asset_root_env": "EASYMETA_SOURCE_REPRO_ROOT",
+  "cases": [
+    {
+      "id": "atkinson-2022",
+      "benchmark_id": "BENCH-ECOLET-ATKINSON-2022",
+      "classification": "modern_reanalysis",
+      "verification_status": "blocked",
+      "scope": "Forensic source-integrity audit of the six Table S1 models; public OSF v1 data are frozen, but their reference-comparison rows do not reproduce the publication data state.",
+      "article": {
+        "doi": "10.1111/ele.14025",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9320827/",
+        "citation": "Atkinson et al. (2022), Terrestrial ecosystem restoration increases biodiversity and reduces its variability, but not to reference levels: A global meta-analysis, Ecology Letters."
+      },
+      "source_release": {
+        "provider": "OSF",
+        "record_id": "4AUCP",
+        "doi": "10.17605/OSF.IO/4AUCP",
+        "version": "OSF file versions 1; project modified 2022-04-25",
+        "license_status": "not_stated",
+        "license": "not_stated; public access does not imply redistribution permission",
+        "landing_url": "https://osf.io/4aucp/",
+        "accessed_at": "2026-08-05"
+      },
+      "artifacts": [
+        {
+          "id": "variation-data",
+          "path": "atkinson-2022/variation_data.csv",
+          "role": "analysis_data",
+          "size": 236851,
+          "checksums": {
+            "sha256": "8221ac46b9cf25c107e32168dbabfbdc18ef9a938093830a571e0143b708c458"
+          },
+          "acquisition": {
+            "mode": "direct",
+            "download_url": "https://osf.io/download/x53b8/?revision=1"
+          },
+          "redistribution": "external_only"
+        },
+        {
+          "id": "author-analysis-code",
+          "path": "atkinson-2022/AppendixS1.Rmd",
+          "role": "original_analysis_code",
+          "size": 149016,
+          "checksums": {
+            "sha256": "5e5e8a99e943bc067938279e0b41d3ae83bcf4da8f89f81911b1049bee3cf1b7"
+          },
+          "acquisition": {
+            "mode": "direct",
+            "download_url": "https://osf.io/download/6mz87/?revision=1"
+          },
+          "redistribution": "external_only"
+        },
+        {
+          "id": "frozen-author-output",
+          "path": "atkinson-2022/AppendixS1.html",
+          "role": "publication_numeric_oracle",
+          "size": 4686346,
+          "checksums": {
+            "sha256": "5b9d5261ecba19744d310f072e6f5389ce9891f2d466f4d202451a300a6fd36b"
+          },
+          "acquisition": {
+            "mode": "direct",
+            "download_url": "https://osf.io/download/q9anh/?revision=1"
+          },
+          "redistribution": "external_only"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "data",
+          "path": "atkinson-2022/variation_data.csv",
+          "role": "model_input",
+          "size": 236851,
+          "sha256": "8221ac46b9cf25c107e32168dbabfbdc18ef9a938093830a571e0143b708c458"
+        },
+        {
+          "name": "source_code",
+          "path": "atkinson-2022/AppendixS1.Rmd",
+          "role": "method_provenance",
+          "size": 149016,
+          "sha256": "5e5e8a99e943bc067938279e0b41d3ae83bcf4da8f89f81911b1049bee3cf1b7"
+        },
+        {
+          "name": "oracle_html",
+          "path": "atkinson-2022/AppendixS1.html",
+          "role": "publication_numeric_oracle",
+          "size": 4686346,
+          "sha256": "5b9d5261ecba19744d310f072e6f5389ce9891f2d466f4d202451a300a6fd36b"
+        }
+      ],
+      "execution": {
+        "enabled": false,
+        "blocked_reason": "OSF v1 contains nine apparent reference SE/sample-size swaps: the public code retains 730 reference effects while the article and frozen HTML report 739.",
+        "runtime": "Rscript",
+        "adapter": "tests/source_reproductions/atkinson_2022.R",
+        "adapter_sha256": "75f690b549928ad7bd57987f5e1b798c32fb7468ed2cec932d645da79d794e26",
+        "args": ["--data", "{data}", "--output", "{output}"],
+        "timeout_seconds": 360
+      },
+      "oracle": {
+        "evidence_kind": "publication_numeric",
+        "analysis_scale": "log",
+        "source_locator": "AppendixS1.html revision 1, Table S1; these are publication oracles, deliberately not replaced by the mismatching OSF v1 rerun.",
+        "assertions": [
+          {"path": "/models/cvr_unrestored/estimate", "expected": -0.152, "abs_tol": 0.0005, "rel_tol": 0},
+          {"path": "/models/cvr_reference/estimate", "expected": 0.183, "abs_tol": 0.0005, "rel_tol": 0},
+          {"path": "/models/mean_unrestored/estimate", "expected": 0.182, "abs_tol": 0.0005, "rel_tol": 0},
+          {"path": "/models/mean_reference/estimate", "expected": -0.139, "abs_tol": 0.0005, "rel_tol": 0},
+          {"path": "/models/cvr_unrestored/k_effects", "expected": 731, "abs_tol": 0, "rel_tol": 0},
+          {"path": "/models/cvr_reference/k_effects", "expected": 739, "abs_tol": 0, "rel_tol": 0}
+        ]
+      },
+      "verification": {
+        "verified_on": "2026-08-05",
+        "result": "blocked",
+        "environment": {"R": "4.5.3", "metafor": "5.0.1", "jsonlite": "2.0.0"},
+        "runner": "tests/run_source_reproductions.py",
+        "source_v1_attempt_sha256": "d487a9f036ad5f1cfe3354c2aa7290ff5f9ff2466d9562f7df888ca1433daf0"
+      },
+      "limitations": [
+        "This case is intentionally blocked and does not count as a verified source reproduction.",
+        "The OSF project does not declare a node license, so source artifacts remain external-only and are not committed to this repository.",
+        "Nine reference rows appear to swap SE and sample size; public v1 yields 730 effects while the publication oracle reports 739."
+      ]
+    },
+    {
+      "id": "cheng-2024",
+      "benchmark_id": "BENCH-NCOMMS-CHENG-2024",
+      "classification": "targeted_reproduction",
+      "verification_status": "verified",
+      "scope": "Reproduce code.R lines 16-99: shared-monoculture sampling covariance, the main all-invader NBE meta-regression, and warming/drought delta-NBE models whose marginal estimates are printed in the article.",
+      "article": {
+        "doi": "10.1038/s41467-024-48876-z",
+        "url": "https://www.nature.com/articles/s41467-024-48876-z",
+        "citation": "Cheng et al. (2024), Biodiversity increases resistance of grasslands against plant invasions under multiple environmental changes, Nature Communications."
+      },
+      "source_release": {
+        "provider": "Figshare",
+        "record_id": "24953433",
+        "doi": "10.6084/m9.figshare.24953433.v1",
+        "version": "v1; published 2024-04-08",
+        "license_status": "declared",
+        "license": "CC BY 4.0",
+        "landing_url": "https://doi.org/10.6084/m9.figshare.24953433.v1",
+        "accessed_at": "2026-08-05"
+      },
+      "artifacts": [
+        {
+          "id": "readme",
+          "path": "cheng-2024/readme.txt",
+          "role": "data_dictionary",
+          "size": 7835,
+          "checksums": {
+            "md5": "29d8caf27c50a486642aadf94be48fca",
+            "sha256": "c59a9b29a09750689cc8dee037e3e5553fef424f9a36b1455a82a4f748ccb9ca"
+          },
+          "acquisition": {
+            "mode": "figshare_version_file",
+            "metadata_url": "https://api.figshare.com/v2/articles/24953433/versions/1",
+            "file_name": "readme.txt"
+          },
+          "redistribution": "cc_by_4_0"
+        },
+        {
+          "id": "data",
+          "path": "cheng-2024/data.xlsx",
+          "role": "analysis_data",
+          "size": 1070343,
+          "checksums": {
+            "md5": "7624d94b8d0d8f94adb077598d21bb87",
+            "sha256": "8d0a8adec66a4552e69f2f716b5d021706c7f1ae0896c7eb55e1065efea20540"
+          },
+          "acquisition": {
+            "mode": "figshare_version_file",
+            "metadata_url": "https://api.figshare.com/v2/articles/24953433/versions/1",
+            "file_name": "data.xlsx"
+          },
+          "redistribution": "cc_by_4_0"
+        },
+        {
+          "id": "author-analysis-code",
+          "path": "cheng-2024/code.R",
+          "role": "original_analysis_code",
+          "size": 146587,
+          "checksums": {
+            "md5": "a71566fdf5609935e272bb02ade19d66",
+            "sha256": "ae8a54b4b8dd19d2fb012d83cf59dd6843c77d6bfc33dfc98085701a06333db5"
+          },
+          "acquisition": {
+            "mode": "figshare_version_file",
+            "metadata_url": "https://api.figshare.com/v2/articles/24953433/versions/1",
+            "file_name": "code.R"
+          },
+          "redistribution": "cc_by_4_0"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "data",
+          "path": "cheng-2024/data.xlsx",
+          "role": "model_input",
+          "size": 1070343,
+          "sha256": "8d0a8adec66a4552e69f2f716b5d021706c7f1ae0896c7eb55e1065efea20540"
+        },
+        {
+          "name": "source_code",
+          "path": "cheng-2024/code.R",
+          "role": "method_provenance",
+          "size": 146587,
+          "sha256": "ae8a54b4b8dd19d2fb012d83cf59dd6843c77d6bfc33dfc98085701a06333db5"
+        },
+        {
+          "name": "readme",
+          "path": "cheng-2024/readme.txt",
+          "role": "data_dictionary",
+          "size": 7835,
+          "sha256": "c59a9b29a09750689cc8dee037e3e5553fef424f9a36b1455a82a4f748ccb9ca"
+        }
+      ],
+      "execution": {
+        "runtime": "Rscript",
+        "adapter": "tests/source_reproductions/cheng_2024.R",
+        "adapter_sha256": "65620cb4105342a390e2df432f20eeec8a37b55a62208cc9c3b48e1b6e59ed60",
+        "args": ["--data", "{data}", "--output", "{output}"],
+        "timeout_seconds": 360
+      },
+      "oracle": {
+        "evidence_kind": "author_code_and_publication_numeric",
+        "analysis_scale": "log_response_ratio",
+        "source_locator": "Figshare v1 code.R lines 16-99; article Results report warming delta-NBE 0.82 [0.05, 1.59] and drought -0.50 [-0.77, -0.22].",
+        "assertions": [
+          {"path": "/source_counts/all_invader_observations", "expected": 1010, "abs_tol": 0, "rel_tol": 0},
+          {"path": "/source_counts/all_invader_experiments", "expected": 25, "abs_tol": 0, "rel_tol": 0},
+          {"path": "/models/nbe_all/coefficients/intrcpt/estimate", "expected": 0.114041410157724, "abs_tol": 1e-08, "rel_tol": 1e-08},
+          {"path": "/models/nbe_all/coefficients/manipulationmanipulated/estimate", "expected": 0.053383979926121, "abs_tol": 1e-08, "rel_tol": 1e-08},
+          {"path": "/models/nbe_all/coefficients/size/estimate", "expected": -0.0218607139084649, "abs_tol": 1e-08, "rel_tol": 1e-08},
+          {"path": "/models/nbe_all/coefficients/age/estimate", "expected": 0.0183856757438563, "abs_tol": 1e-08, "rel_tol": 1e-08},
+          {"path": "/models/nbe_all/coefficients/richness/estimate", "expected": 0.0754717972516311, "abs_tol": 1e-08, "rel_tol": 1e-08},
+          {"path": "/models/nbe_all/manipulation_test/qm", "expected": 0.6539156598175, "abs_tol": 1e-08, "rel_tol": 1e-08},
+          {"path": "/models/nbe_all/k_effects", "expected": 1008, "abs_tol": 0, "rel_tol": 0},
+          {"path": "/models/nbe_all/n_experiments", "expected": 24, "abs_tol": 0, "rel_tol": 0},
+          {"path": "/models/delta_nbe_warming/marginal_estimate", "expected": 0.82047033, "abs_tol": 1e-07, "rel_tol": 1e-07},
+          {"path": "/models/delta_nbe_warming/ci_lower", "expected": 0.05485648, "abs_tol": 1e-07, "rel_tol": 1e-07},
+          {"path": "/models/delta_nbe_warming/ci_upper", "expected": 1.58608418, "abs_tol": 1e-07, "rel_tol": 1e-07},
+          {"path": "/models/delta_nbe_drought/marginal_estimate", "expected": -0.4987140, "abs_tol": 1e-07, "rel_tol": 1e-07},
+          {"path": "/models/delta_nbe_drought/ci_lower", "expected": -0.7741499, "abs_tol": 1e-07, "rel_tol": 1e-07},
+          {"path": "/models/delta_nbe_drought/ci_upper", "expected": -0.2232782, "abs_tol": 1e-07, "rel_tol": 1e-07}
+        ]
+      },
+      "verification": {
+        "verified_on": "2026-08-05",
+        "result": "pass",
+        "environment": {"R": "4.5.3", "metafor": "5.0.1", "readxl": "1.4.5", "jsonlite": "2.0.0"},
+        "runner": "tests/run_source_reproductions.py",
+        "frozen_output_sha256": "c1777357c2fa64c6731649af26fad5d2200a8adcd6ba3d869f2ec62688bef15c"
+      },
+      "limitations": [
+        "This is one prespecified main model, not the roughly 3,500-line complete analysis and figure script.",
+        "The authors did not provide a lockfile; the verification environment is frozen separately in this manifest.",
+        "The author's numeric common-control identifier is reproduced for fidelity but should not be copied as a general identifier design."
+      ]
+    },
+    {
+      "id": "goncalves-2025",
+      "benchmark_id": "BENCH-NATURE-GONCALVES-2025",
+      "classification": "targeted_reproduction",
+      "verification_status": "verified",
+      "scope": "Starting from the frozen processed diversity table, reproduce the all-pairs alpha, beta, and gamma log-response-ratio random-effects models in 08_meta_analysis.R.",
+      "article": {
+        "doi": "10.1038/s41586-025-08688-7",
+        "url": "https://www.nature.com/articles/s41586-025-08688-7",
+        "citation": "Gonçalves-Souza et al. (2025), Species turnover does not rescue biodiversity in fragmented landscapes, Nature."
+      },
+      "source_release": {
+        "provider": "Zenodo",
+        "record_id": "14885581",
+        "doi": "10.5281/zenodo.14885581",
+        "version": "0.1.0; Git commit 15f5919a57062ac9b87044aaf49213c2894b1dea",
+        "license_status": "declared",
+        "license": "CC BY 4.0",
+        "landing_url": "https://zenodo.org/records/14885581",
+        "accessed_at": "2026-08-05"
+      },
+      "artifacts": [
+        {
+          "id": "release-archive",
+          "path": "goncalves-2025/release-0.1.0.zip",
+          "role": "versioned_data_and_code_release",
+          "size": 611191,
+          "checksums": {
+            "md5": "0c2359ddbf07ac5e411b7f1f55073e0c",
+            "sha256": "f715c9929021431eb7eca06ac3a23e737ffe62dd9e177a1edc5a59cb53e9f2b2"
+          },
+          "acquisition": {
+            "mode": "zenodo_record_file",
+            "metadata_url": "https://zenodo.org/api/records/14885581",
+            "file_name": "thiago-goncalves-souza/ms-biodiversity-loss-fragmented-landscapes-0.1.0.zip"
+          },
+          "extract_to": "goncalves-2025/release-0.1.0",
+          "redistribution": "cc_by_4_0"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "data",
+          "path": "goncalves-2025/release-0.1.0/thiago-goncalves-souza-ms-biodiversity-loss-fragmented-landscapes-15f5919/processed_data/diversity_of_2.csv",
+          "role": "model_input",
+          "size": 17894,
+          "sha256": "2b042518276687af432fe145ea096ce400f902282db7ed859af7086714d9afa7"
+        },
+        {
+          "name": "source_code",
+          "path": "goncalves-2025/release-0.1.0/thiago-goncalves-souza-ms-biodiversity-loss-fragmented-landscapes-15f5919/08_meta_analysis.R",
+          "role": "method_provenance",
+          "size": 140523,
+          "sha256": "9465a9d90035e1ff8efd6c24cbd9f9f28b65dca6bb7a96b16d6bf9992a0af735"
+        },
+        {
+          "name": "utility_code",
+          "path": "goncalves-2025/release-0.1.0/thiago-goncalves-souza-ms-biodiversity-loss-fragmented-landscapes-15f5919/utility_functions.R",
+          "role": "method_provenance",
+          "size": 13383,
+          "sha256": "91175d927298b84fedf5ba7f1d4f19aa08630462275f6483f74cf7130c5b580d"
+        },
+        {
+          "name": "renv_lock",
+          "path": "goncalves-2025/release-0.1.0/thiago-goncalves-souza-ms-biodiversity-loss-fragmented-landscapes-15f5919/renv.lock",
+          "role": "environment_provenance",
+          "size": 36201,
+          "sha256": "a9ddd7ef3a380eef3c0a2b59cdb9a4d973c3c6fc8216ed3c971d0996e2f587df"
+        }
+      ],
+      "execution": {
+        "runtime": "Rscript",
+        "adapter": "tests/source_reproductions/goncalves_2025.R",
+        "adapter_sha256": "249168a4b8bf53abb77b73fefea806c117808e80fc133af6f851d0c73f009e7a",
+        "args": ["--data", "{data}", "--output", "{output}"],
+        "timeout_seconds": 180
+      },
+      "oracle": {
+        "evidence_kind": "author_code_numeric_and_publication_direction",
+        "analysis_scale": "log",
+        "source_locator": "Zenodo 0.1.0 08_meta_analysis.R, all-pairs alpha/beta/gamma ROM models; article abstract supplies direction checks.",
+        "assertions": [
+          {"path": "/models/alpha_all_pairs/estimate", "expected": 0.187585259866719, "abs_tol": 1e-08, "rel_tol": 1e-08},
+          {"path": "/models/alpha_all_pairs/tau2", "expected": 0.128749091226981, "abs_tol": 1e-08, "rel_tol": 1e-08},
+          {"path": "/models/beta_all_pairs/estimate", "expected": -0.0636874950920835, "abs_tol": 1e-08, "rel_tol": 1e-08},
+          {"path": "/models/beta_all_pairs/tau2", "expected": 0.0229249716464491, "abs_tol": 1e-08, "rel_tol": 1e-08},
+          {"path": "/models/gamma_all_pairs/estimate", "expected": 0.123233541434887, "abs_tol": 1e-08, "rel_tol": 1e-08},
+          {"path": "/models/gamma_all_pairs/tau2", "expected": 0.137242683863299, "abs_tol": 1e-08, "rel_tol": 1e-08},
+          {"path": "/models/alpha_all_pairs/k_studies", "expected": 37, "abs_tol": 0, "rel_tol": 0},
+          {"path": "/models/beta_all_pairs/k_studies", "expected": 37, "abs_tol": 0, "rel_tol": 0},
+          {"path": "/models/gamma_all_pairs/k_studies", "expected": 37, "abs_tol": 0, "rel_tol": 0}
+        ]
+      },
+      "verification": {
+        "verified_on": "2026-08-05",
+        "result": "pass",
+        "environment": {"R": "4.5.3", "metafor": "5.0.1", "jsonlite": "2.0.0"},
+        "runner": "tests/run_source_reproductions.py",
+        "frozen_output_sha256": "517b765b6c424b677a51064160bb0a4b34f71d1881947a350f698a7f98758a56"
+      },
+      "limitations": [
+        "This starts from processed_data/diversity_of_2.csv and does not claim full raw-community-matrix reconstruction.",
+        "The release lockfile omits several packages used by the complete scripts; this adapter requires only metafor and jsonlite.",
+        "The archived raw taxonomy contains 4009 unique name strings while the article reports 4006 taxa; that unresolved lineage does not affect this processed-table target but blocks a full raw-data reproduction claim."
+      ]
+    },
+    {
+      "id": "keck-2025",
+      "benchmark_id": "BENCH-NATURE-BIODIV-2025",
+      "classification": "targeted_reproduction",
+      "verification_status": "verified",
+      "scope": "From the frozen Zenodo v1.0 data, reproduce the three global intercept Gaussian mixed models for biotic homogeneity, composition shift, and local diversity in PBL_stats.R.",
+      "article": {
+        "doi": "10.1038/s41586-025-08752-2",
+        "url": "https://www.nature.com/articles/s41586-025-08752-2",
+        "citation": "Keck et al. (2025), The global human impact on biodiversity, Nature."
+      },
+      "source_release": {
+        "provider": "Zenodo",
+        "record_id": "14608770",
+        "doi": "10.5281/zenodo.14608770",
+        "version": "v1.0; Git tag v1.0; commit 5acdbde1336f5039d669abb46509f3cae708892a",
+        "license_status": "declared",
+        "license": "GPL-3.0",
+        "landing_url": "https://zenodo.org/records/14608770",
+        "accessed_at": "2026-08-05"
+      },
+      "artifacts": [
+        {
+          "id": "release-archive",
+          "path": "keck-2025/release-v1.0.zip",
+          "role": "versioned_data_code_and_environment_archive",
+          "size": 21514741,
+          "checksums": {
+            "md5": "daa5b88b8726e688a5c4d1cd4dbf2e52",
+            "sha256": "63ee7b549a8f29452144249c6b56ccd274b0917459cae1737709d67a7a35e0d8"
+          },
+          "acquisition": {
+            "mode": "zenodo_record_file",
+            "metadata_url": "https://zenodo.org/api/records/14608770",
+            "file_name": "fkeck/metabeta-v1.0.zip"
+          },
+          "extract_to": "keck-2025/release-v1.0",
+          "redistribution": "gpl_3_0"
+        }
+      ],
+      "inputs": [
+        {
+          "name": "data",
+          "path": "keck-2025/release-v1.0/fkeck-metabeta-5acdbde/data/data.json",
+          "role": "model_input",
+          "size": 5679187,
+          "sha256": "40ac4a117786b2ba1bb9d376c0e01ca3b69057650506dbd30ab6c915910986f0"
+        },
+        {
+          "name": "source_code",
+          "path": "keck-2025/release-v1.0/fkeck-metabeta-5acdbde/R/PBL_stats.R",
+          "role": "method_provenance",
+          "size": 3439,
+          "sha256": "745889258917ecbc2f4b8cf1c885c5de14492164808e1d22dac88edaaa04bde1"
+        },
+        {
+          "name": "load_code",
+          "path": "keck-2025/release-v1.0/fkeck-metabeta-5acdbde/R/PBL_load_data.R",
+          "role": "data_loading_provenance",
+          "size": 1644,
+          "sha256": "a6cec0239b0b43e55b962b93da92f0334dd7f25fc1280855497cbebaf9ce86a2"
+        },
+        {
+          "name": "session_info",
+          "path": "keck-2025/release-v1.0/fkeck-metabeta-5acdbde/session_info.txt",
+          "role": "environment_provenance",
+          "size": 3183,
+          "sha256": "001ee249776dec234d6be646bec327f93d085b71caec90bd7fa000d4a2d23e81"
+        },
+        {
+          "name": "license",
+          "path": "keck-2025/release-v1.0/fkeck-metabeta-5acdbde/LICENSE.md",
+          "role": "license_provenance",
+          "size": 34904,
+          "sha256": "585e25ef8f5946a52bf2aed68d5becfc38be94a8663aa01c1b31d88aa57f1de3"
+        }
+      ],
+      "execution": {
+        "runtime": "Rscript",
+        "adapter": "tests/source_reproductions/keck_2025.R",
+        "adapter_sha256": "2d37708b4f8c4fa39d945fc7c78e6960ef0f451a8eb754455b4583e13f81636d",
+        "args": ["--data", "{data}", "--output", "{output}"],
+        "timeout_seconds": 180
+      },
+      "oracle": {
+        "evidence_kind": "author_code_and_publication_numeric",
+        "analysis_scale": "log_response_ratio",
+        "source_locator": "Zenodo v1.0 PBL_stats.R lines 34-60; the article Results report the three corresponding global estimates and 95% confidence intervals.",
+        "assertions": [
+          {"path": "/source_counts/comparisons", "expected": 3667, "abs_tol": 0, "rel_tol": 0},
+          {"path": "/source_counts/articles", "expected": 2133, "abs_tol": 0, "rel_tol": 0},
+          {"path": "/source_counts/reference_sites", "expected": 49401, "abs_tol": 0, "rel_tol": 0},
+          {"path": "/source_counts/impacted_sites", "expected": 48382, "abs_tol": 0, "rel_tol": 0},
+          {"path": "/models/homogeneity/estimate", "expected": -0.0623191548025598, "abs_tol": 5e-07, "rel_tol": 5e-07},
+          {"path": "/models/homogeneity/ci_lower", "expected": -0.112956408564892, "abs_tol": 5e-07, "rel_tol": 5e-07},
+          {"path": "/models/homogeneity/ci_upper", "expected": -0.0116819010402279, "abs_tol": 5e-07, "rel_tol": 5e-07},
+          {"path": "/models/homogeneity/n_comparisons", "expected": 3667, "abs_tol": 0, "rel_tol": 0},
+          {"path": "/models/composition_shift/estimate", "expected": 0.563968670376577, "abs_tol": 5e-07, "rel_tol": 5e-07},
+          {"path": "/models/composition_shift/ci_lower", "expected": 0.467255219943762, "abs_tol": 5e-07, "rel_tol": 5e-07},
+          {"path": "/models/composition_shift/ci_upper", "expected": 0.660682120809393, "abs_tol": 5e-07, "rel_tol": 5e-07},
+          {"path": "/models/composition_shift/n_comparisons", "expected": 3667, "abs_tol": 0, "rel_tol": 0},
+          {"path": "/models/local_diversity/estimate", "expected": -0.180854276759183, "abs_tol": 5e-07, "rel_tol": 5e-07},
+          {"path": "/models/local_diversity/ci_lower", "expected": -0.290417410924667, "abs_tol": 5e-07, "rel_tol": 5e-07},
+          {"path": "/models/local_diversity/ci_upper", "expected": -0.0712911425936994, "abs_tol": 5e-07, "rel_tol": 5e-07},
+          {"path": "/models/local_diversity/n_comparisons", "expected": 1139, "abs_tol": 0, "rel_tol": 0},
+          {"path": "/models/homogeneity/convergence_code", "expected": 0, "abs_tol": 0, "rel_tol": 0},
+          {"path": "/models/composition_shift/convergence_code", "expected": 0, "abs_tol": 0, "rel_tol": 0},
+          {"path": "/models/local_diversity/convergence_code", "expected": 0, "abs_tol": 0, "rel_tol": 0},
+          {"path": "/models/homogeneity/positive_definite_hessian", "expected": true, "abs_tol": 0, "rel_tol": 0},
+          {"path": "/models/composition_shift/positive_definite_hessian", "expected": true, "abs_tol": 0, "rel_tol": 0},
+          {"path": "/models/local_diversity/positive_definite_hessian", "expected": true, "abs_tol": 0, "rel_tol": 0}
+        ]
+      },
+      "verification": {
+        "verified_on": "2026-08-05",
+        "result": "pass",
+        "environment": {"R": "4.5.3", "glmmTMB": "1.1.14", "emmeans": "2.0.3", "jsonlite": "2.0.0"},
+        "source_environment": {"R": "4.1.2", "glmmTMB": "1.1.8", "emmeans": "1.10.0"},
+        "runner": "tests/run_source_reproductions.py",
+        "frozen_output_sha256": "4646eade97548446f21ac8a41927d44dba5460504f83dd92ec661728d95cf037"
+      },
+      "limitations": [
+        "This is a three-model targeted reproduction and does not execute the complete run_all.R workflow or regenerate all figures.",
+        "The release has no lockfile or container; session_info.txt records package versions but the article Methods states R 4.0.3 while the repository records R 4.1.2.",
+        "The article prints the homogeneity confidence interval in reverse bound order; the oracle stores the ordered author-model interval [-0.1129564, -0.0116819].",
+        "These are unweighted Gaussian mixed models, not inverse-variance-weighted meta-analysis; they must not be treated as EasyMeta's default estimator."
+      ]
+    }
+  ]
+}

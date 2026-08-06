@@ -17,9 +17,13 @@
     "CLUBSANDWICH-DOCS": {"living": true},
     "COCHRANE-DTA-HB-2.0": {"living": true},
     "COCHRANE-HB-6.5": {"living": true},
+    "COCHRANE-MISSING-13": {"living": true},
+    "COCHRANE-OVERVIEWS-6.5": {"living": true},
+    "COCHRANE-UPDATE-6.5": {"living": true},
     "DEPENDENT-ES-2025": {"living": false},
     "ECO-META-HB-2013": {"living": false},
     "ECO-PUBBIAS-2022": {"living": false},
+    "EFFECT-CONVERSION-2026": {"living": false},
     "FEAT-2022": {"living": false},
     "GRADE-BOOK-LIVING": {"living": true},
     "HETEROGENEITY-2025": {"living": false},
@@ -37,6 +41,7 @@
     "PRISMA-ECOEVO-1.0": {"living": true},
     "PRISMA-S-2021": {"living": true},
     "QUADAS-3-LIVING": {"living": true},
+    "QUALITY-SCORE-1999": {"living": false},
     "RESTORATION-2026": {"living": false},
     "ROB2-LIVING": {"living": true},
     "ROBINS-E-2024": {"living": true},
@@ -46,8 +51,14 @@
   "rules": [
     {
       "id": "workflow.full_review_core",
-      "match": {"all": [{"path": "task.product_type", "operator": "in", "values": ["protocol", "systematic_review", "systematic_map", "scoping_review", "rapid_review", "umbrella_review"]}], "any": [{"path": "task.stage", "operator": "equals", "value": "planning"}, {"path": "task.decision_points", "operator": "contains", "value": "question_protocol"}]},
+      "match": {"all": [{"path": "task.product_type", "operator": "in", "values": ["protocol", "systematic_review", "systematic_map", "scoping_review", "rapid_review", "umbrella_review"]}]},
       "required_reference_files": ["references/evidence-synthesis-core.md"],
+      "required_source_ids": []
+    },
+    {
+      "id": "decision.evidence_synthesis_conduct",
+      "match": {"all": [{"path": "task.decision_points", "operator": "contains", "value": "evidence_synthesis_conduct"}]},
+      "required_reference_files": ["references/evidence-synthesis-core.md", "references/meta-analysis-decision-gates.md"],
       "required_source_ids": []
     },
     {
@@ -70,13 +81,13 @@
     },
     {
       "id": "stage.quantitative_analysis",
-      "match": {"all": [{"path": "task.stage", "operator": "in", "values": ["analysis", "interpretation", "audit"]}]},
+      "match": {"all": [{"path": "task.stage", "operator": "in", "values": ["analysis", "interpretation"]}]},
       "required_reference_files": ["references/effect-size-and-models.md"],
       "required_source_ids": ["INTRO-META-2E"]
     },
     {
       "id": "analysis.ecology_environment",
-      "match": {"all": [{"path": "task.domain", "operator": "in", "values": ["ecology", "evolution", "conservation", "environmental_science"]}], "any": [{"path": "task.stage", "operator": "in", "values": ["analysis", "interpretation", "audit"]}, {"path": "task.decision_points", "operator": "intersects", "values": ["effect_size", "dependence", "synthesis_model", "small_study_effects"]}]},
+      "match": {"all": [{"path": "task.domain", "operator": "in", "values": ["ecology", "evolution", "conservation", "environmental_science"]}], "any": [{"path": "task.stage", "operator": "in", "values": ["analysis", "interpretation"]}, {"path": "task.decision_points", "operator": "intersects", "values": ["effect_size", "effect_conversion", "dependence", "synthesis_model", "few_studies", "small_study_effects"]}]},
       "required_reference_files": ["references/ecology-review.md", "references/effect-size-and-models.md"],
       "required_source_ids": ["CEE-SYNTHESIS-LIVING", "NAKAGAWA-QES-2023"]
     },
@@ -85,6 +96,96 @@
       "match": {"all": [{"path": "task.decision_points", "operator": "intersects", "values": ["effect_size", "dependence", "synthesis_model", "small_study_effects"]}]},
       "required_reference_files": ["references/effect-size-and-models.md"],
       "required_source_ids": ["INTRO-META-2E"]
+    },
+    {
+      "id": "decision.few_studies",
+      "match": {"all": [{"path": "data.level", "operator": "equals", "value": "aggregate"}], "any": [{"path": "data.independent_cluster_count", "operator": "lte", "value": 10}, {"path": "task.decision_points", "operator": "contains", "value": "few_studies"}]},
+      "required_reference_files": ["references/effect-size-and-models.md", "references/meta-analysis-decision-gates.md"],
+      "required_source_ids": ["COCHRANE-HB-6.5"]
+    },
+    {
+      "id": "decision.small_study_effects",
+      "match": {"all": [{"path": "task.decision_points", "operator": "contains", "value": "small_study_effects"}]},
+      "required_reference_files": ["references/effect-size-and-models.md", "references/meta-analysis-decision-gates.md"],
+      "required_source_ids": ["COCHRANE-MISSING-13"]
+    },
+    {
+      "id": "decision.effect_conversion",
+      "match": {"all": [{"path": "task.decision_points", "operator": "contains", "value": "effect_conversion"}]},
+      "required_reference_files": ["references/effect-size-and-models.md", "references/meta-analysis-decision-gates.md"],
+      "required_source_ids": []
+    },
+    {
+      "id": "decision.effect_conversion.response_ratio_to_smd_ecology",
+      "match": {"all": [{"path": "task.domain", "operator": "in", "values": ["ecology", "evolution", "conservation", "environmental_science"]}, {"path": "task.conversion_family", "operator": "equals", "value": "response_ratio_to_smd"}]},
+      "required_reference_files": ["references/effect-size-and-models.md", "references/meta-analysis-decision-gates.md"],
+      "required_source_ids": ["EFFECT-CONVERSION-2026"]
+    },
+    {
+      "id": "decision.review_update",
+      "match": {"all": [{"path": "task.decision_points", "operator": "contains", "value": "review_update"}]},
+      "required_reference_files": ["references/evidence-synthesis-core.md", "references/meta-analysis-decision-gates.md"],
+      "required_source_ids": []
+    },
+    {
+      "id": "decision.review_update.health",
+      "match": {"all": [{"path": "task.decision_points", "operator": "contains", "value": "review_update"}, {"path": "task.domain", "operator": "in", "values": ["medical", "public_health", "general_science"]}]},
+      "required_reference_files": ["references/evidence-synthesis-core.md"],
+      "required_source_ids": ["COCHRANE-UPDATE-6.5"]
+    },
+    {
+      "id": "decision.review_update.ecology",
+      "match": {"all": [{"path": "task.decision_points", "operator": "contains", "value": "review_update"}, {"path": "task.domain", "operator": "in", "values": ["ecology", "evolution", "conservation", "environmental_science"]}]},
+      "required_reference_files": ["references/ecology-review.md", "references/evidence-synthesis-core.md"],
+      "required_source_ids": ["CEE-STD-5.1", "CEE-METHODS-5.1"]
+    },
+    {
+      "id": "decision.method_claim_audit",
+      "match": {"any": [{"path": "task.stage", "operator": "equals", "value": "audit"}, {"path": "task.decision_points", "operator": "contains", "value": "method_claim_audit"}]},
+      "required_reference_files": ["references/meta-analysis-decision-gates.md"],
+      "required_source_ids": []
+    },
+    {
+      "id": "audit.conduct",
+      "match": {"all": [{"path": "task.audit_targets", "operator": "contains", "value": "conduct"}]},
+      "required_reference_files": ["references/evidence-synthesis-core.md", "references/meta-analysis-decision-gates.md"],
+      "required_source_ids": []
+    },
+    {
+      "id": "audit.effect_model",
+      "match": {"all": [{"path": "task.audit_targets", "operator": "contains", "value": "effect_model"}]},
+      "required_reference_files": ["references/effect-size-and-models.md", "references/meta-analysis-decision-gates.md"],
+      "required_source_ids": ["INTRO-META-2E"]
+    },
+    {
+      "id": "audit.software",
+      "match": {"all": [{"path": "task.audit_targets", "operator": "contains", "value": "software"}]},
+      "required_reference_files": ["references/r-metafor-workflows.md", "references/source-registry.md"],
+      "required_source_ids": ["METAFOR-DOCS"]
+    },
+    {
+      "id": "audit.appraisal",
+      "match": {"all": [{"path": "task.audit_targets", "operator": "contains", "value": "appraisal"}]},
+      "required_reference_files": ["references/bias-and-certainty.md", "references/meta-analysis-decision-gates.md"],
+      "required_source_ids": ["QUALITY-SCORE-1999"]
+    },
+    {
+      "id": "audit.citation",
+      "match": {"all": [{"path": "task.audit_targets", "operator": "contains", "value": "citation"}]},
+      "required_reference_files": ["references/meta-analysis-decision-gates.md", "references/source-registry.md"],
+      "required_source_ids": []
+    },
+    {
+      "id": "audit.reporting.health",
+      "match": {"all": [{"path": "task.audit_targets", "operator": "contains", "value": "reporting"}, {"path": "task.domain", "operator": "in", "values": ["medical", "public_health", "general_science"]}]},
+      "required_reference_files": ["references/medical-review.md"],
+      "required_source_ids": ["PRISMA-2020"]
+    },
+    {
+      "id": "audit.reporting.ecology_environment",
+      "match": {"all": [{"path": "task.audit_targets", "operator": "contains", "value": "reporting"}, {"path": "task.domain", "operator": "in", "values": ["ecology", "evolution", "conservation", "environmental_science"]}]},
+      "required_reference_files": ["references/environmental-reporting.md"],
+      "required_source_ids": ["CEE-STD-5.1", "ROSES", "PRISMA-ECOEVO-1.0"]
     },
     {
       "id": "decision.r_implementation",
@@ -256,9 +357,15 @@
     },
     {
       "id": "specialist.biodiversity_derived",
-      "match": {"any": [{"path": "specialist_triggers.community_composition", "operator": "equals", "value": true}, {"path": "specialist_triggers.multidimensional_biodiversity", "operator": "equals", "value": true}, {"path": "specialist_triggers.variability_effect", "operator": "equals", "value": true}, {"path": "specialist_triggers.factorial_interaction", "operator": "equals", "value": true}, {"path": "specialist_triggers.ecosystem_multifunctionality", "operator": "equals", "value": true}, {"path": "specialist_triggers.derived_recovery_stability", "operator": "equals", "value": true}, {"path": "specialist_triggers.second_order_meta", "operator": "equals", "value": true}]},
+      "match": {"any": [{"path": "specialist_triggers.community_composition", "operator": "equals", "value": true}, {"path": "specialist_triggers.multidimensional_biodiversity", "operator": "equals", "value": true}, {"path": "specialist_triggers.variability_effect", "operator": "equals", "value": true}, {"path": "specialist_triggers.factorial_interaction", "operator": "equals", "value": true}, {"path": "specialist_triggers.ecosystem_multifunctionality", "operator": "equals", "value": true}, {"path": "specialist_triggers.derived_recovery_stability", "operator": "equals", "value": true}]},
       "required_reference_files": ["references/plant-biodiversity-specialist-routes.md"],
       "required_source_ids": ["NAKAGAWA-QES-2023"]
+    },
+    {
+      "id": "specialist.second_order",
+      "match": {"all": [{"path": "specialist_triggers.second_order_meta", "operator": "equals", "value": true}]},
+      "required_reference_files": ["references/meta-analysis-decision-gates.md", "references/second-order-meta.md"],
+      "required_source_ids": ["COCHRANE-OVERVIEWS-6.5", "QUALITY-SCORE-1999"]
     },
     {
       "id": "decision.small_study_ecology",
@@ -271,6 +378,12 @@
       "match": {"all": [{"path": "task.decision_points", "operator": "contains", "value": "benchmark_audit"}]},
       "required_reference_files": ["references/plant-biodiversity-benchmark-casebook.md"],
       "required_source_ids": ["BENCH-NATURE-PLANT-2025", "BENCH-NATURE-BIODIV-2025", "BENCH-NATURE-GENETIC-2025"]
+    },
+    {
+      "id": "decision.source_reproduction",
+      "match": {"all": [{"path": "task.decision_points", "operator": "contains", "value": "source_reproduction"}]},
+      "required_reference_files": ["references/source-reproduction.md", "references/source-registry.md", "references/plant-biodiversity-benchmark-casebook.md"],
+      "required_source_ids": []
     }
   ]
 }

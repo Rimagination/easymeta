@@ -11,6 +11,19 @@ Conduct evidence synthesis as an auditable scientific workflow. Select methods f
 
 Treat statistical pooling as optional. Recommend structured narrative synthesis or a systematic map when quantitative pooling would answer an incoherent question.
 
+## Operating stance: question first, method second
+
+Begin with the researcher's question in plain language and the intended decision, then identify the estimand and the structure that generated the evidence. Do not start from a named model, software package, or a method found in a benchmark article. Use `references/problem-driven-analysis.md` and copy `assets/analysis_map_template.yaml` when the task needs more than a short explanation.
+
+Use the smallest sufficient analysis depth:
+
+- `orient`: explain a concept, article, or case without forcing a full machine route;
+- `design`: turn a research question into an estimand, data schema, candidate routes, and sensitivity plan;
+- `audit`: compare claims with the primary source, implementation, and conclusion;
+- `reproduce`: run versioned source data/code and report numerical agreement or discrepancy.
+
+Treat the method patterns in the reference as prompts for judgment, not as automatic classifications. Present a minimum viable route, a robust alternative, and an exploratory extension when more than one is defensible. Reserve hard stops for choices that would change the estimand, manufacture independence, create false precision, or make the result uninterpretable.
+
 ## Non-negotiable rules
 
 - Separate evidence synthesis from individual medical diagnosis or treatment advice.
@@ -20,30 +33,39 @@ Treat statistical pooling as optional. Recommend structured narrative synthesis 
 - Never pool an outcome named only “biodiversity”. Freeze component, dimension, measure family, data type, Hill order where applicable, grain, extent, sampling units, observed/estimated status, and completeness/coverage first.
 - Separate sampling-error covariance `V`, true-effect random/correlation structure, and coefficient-level robust inference. None of these three layers substitutes for another.
 - Never treat the analysis used by a high-impact benchmark paper as a universal default; reconstruct its question, estimand, sampling unit, dependence, and assumptions before borrowing any method.
+- Never describe a synthetic conceptual benchmark as source-data reproduction. Report `source_replication_status` separately; missing public or authorized inputs remain pending/NOT_RUN, not PASS.
 - Never mix reported natural-scale estimates with analysis-scale standard errors or variances. Keep raw extraction and analysis effects as separate versioned data stages.
 - Never run the ordinary `yi/vi` model runner until the synthesis router permits it, the P0-6 reference gate has passed, and an independent sampling-cluster field is declared.
 - Never choose common/fixed-effect versus random-effects models from a heterogeneity-test P value alone.
+- Never use a universal minimum such as `k=4` to permit Meta-analysis. Count independent sampling clusters, then separate mathematical poolability from the reliability of heterogeneity, moderator, prediction, and small-study-effect inference.
 - Never return a binary “publication bias present/absent” verdict from funnel, Egger, trim-and-fill, fail-safe, P-curve, or one selection model.
+- Never convert effect measures merely to increase the number of poolable rows. Require an estimand-preserving conversion contract with formula, assumptions, variance/covariance propagation, sensitivity analysis, and human verification.
+- Never treat an observation-level random effect as a substitute for sampling covariance, or claim that a custom effect measure is outside `metafor` when valid estimates and `V` are available.
+- Never weight studies or reviews by an ad hoc composite quality score. If a published quality-effects method supplies a derived weight or precision adjustment, audit the exact formula and parameter semantics first; do not pass an object named `W`, `quality`, or `quality_index` into `V` without proving that it is on the sampling-variance/VCV scale and reproducing its direction with a small numerical test.
+- Never update a review by only appending new effect rows. Re-run the applicable search, eligibility, integrity, extraction, appraisal, method, and reporting checks.
 - Distinguish reporting guidance from conduct guidance and risk-of-bias tools from certainty-of-evidence frameworks.
 - Distinguish association, intervention effect, prediction, and causal effect. Do not upgrade observational associations into causal claims.
 - Report uncertainty, limitations, protocol deviations, exclusions, and failed analyses even when they weaken the narrative.
 - Require human verification for eligibility decisions, extracted values, risk-of-bias judgments, clinical/ecological interpretation, and all AI-generated outputs used in a review.
 - Use current official guidance when standards, software defaults, or package behavior may have changed. Record the source version and access date.
 - Never treat `read=true`, a file hash, or a completed receipt as proof that a person or model understood a source. The receipt is an auditable attestation; consequential interpretation still requires human verification.
+- Do not turn the skill into a formula checklist. A case, package default, or verified implementation is evidence for a choice in a stated context, not a universal default for other questions.
 
 ## Route the task
 
-1. Identify the requested product: protocol, systematic review, systematic map, scoping review, rapid review, umbrella review, quantitative re-analysis, audit, or manuscript report.
-2. Identify the domain and question frame:
+1. Select the smallest sufficient mode: `orient`, `design`, `audit`, or `reproduce`. Do not create a full route/receipt package for a simple orientation request.
+2. Write a one-paragraph question statement and complete the analysis map before naming a model. Identify what the result will be used to decide and what extrapolation is out of scope.
+3. Identify the requested product: protocol, systematic review, systematic map, scoping review, rapid review, umbrella review, quantitative re-analysis, audit, or manuscript report.
+4. Identify the domain and question frame:
    - Use PICO or a justified variant for interventions and clinical questions.
    - Use PECO/PICO and an explicit causal or conceptual model for environmental and ecological questions.
-3. Identify eligible study designs, outcome families, effect estimands, unit of analysis, spatial/temporal scale, and intended decision context.
-4. Identify the data level: use `aggregate` for report-level effects or arm/cell summaries, `ipd` for individual/unit-level raw data, `raw_community_matrix` for species-by-sample matrices, and `meta_level` for existing Meta-analysis summaries. Then identify multiple outcomes/time points, clustered studies, phylogenetic data, or spatially/temporally correlated data.
-5. State whether the request concerns planning, execution, interpretation, reporting, or independent audit.
-6. Copy `assets/synthesis_route_template.json`, complete the task, data, and trigger fields, set `task.as_of_date` to the actual guidance-check date, and run `python scripts/route_synthesis.py <plan.json> --output <pending-route.json>`. The first pass deterministically returns `required_references`, `required_source_ids`, matched rules, and a plan SHA-256; it keeps `runner_allowed=false` while the receipt is pending.
-7. Read only the routed local references and open the current official pages for every routed source ID. Copy `assets/reference_receipt_template.json`; record exact local-file SHA-256 values, section locators that occur in those files, decision mappings, source versions, access dates, milestone checks, update summaries, and the accountable reviewer/agent run.
-8. Run `python scripts/validate_reference_receipt.py <pending-route.json> <receipt.json>`. Resolve every failure; do not substitute a free-text claim of reading.
-9. Re-run `python scripts/route_synthesis.py <plan.json> --reference-receipt <receipt.json> --output <route.json>`. Require `reference_gate.status=passed` before any analysis handoff. Use the ordinary runner only when `runner_allowed=true`; when `route=specialist_route`, keep the ordinary runner blocked and follow `required_handoff` plus the specialist input contract. A `no_pooling` route never becomes executable.
+5. Identify eligible study designs, outcome families, effect estimands, unit of analysis, spatial/temporal scale, and intended decision context.
+6. Identify the data level: use `aggregate` for report-level effects or arm/cell summaries, `ipd` for individual/unit-level raw data, `raw_community_matrix` for species-by-sample matrices, and `meta_level` for existing Meta-analysis summaries. Then identify multiple outcomes/time points, clustered studies, phylogenetic data, or spatially/temporally correlated data. For aggregate analysis, count independent sampling clusters rather than effect rows and store the count in `data.independent_cluster_count`.
+7. State whether the request concerns planning, execution, interpretation, reporting, or independent audit. For audit work, declare one or more `task.audit_targets`: `conduct`, `reporting`, `effect_model`, `software`, `appraisal`, or `citation`. For effect conversion, declare `task.conversion_family` instead of routing every conversion to the same source.
+8. For `design`, `audit`, and `reproduce` work, copy `assets/synthesis_route_template.json`, complete the task, data, audit/conversion, and trigger fields, set `task.as_of_date` to the actual guidance-check date, and run `python scripts/route_synthesis.py <plan.json> --output <pending-route.json>`. The first pass deterministically returns `required_references`, `required_source_ids`, matched rules, and a plan SHA-256; it keeps `runner_allowed=false` while the receipt is pending.
+9. Read only the routed local references and open the current official pages for every routed source ID. Copy `assets/reference_receipt_template.json`; record exact local-file SHA-256 values, section locators that occur in those files, decision mappings, source versions, access dates, milestone checks, update summaries, and the accountable reviewer/agent run.
+10. Run `python scripts/validate_reference_receipt.py <pending-route.json> <receipt.json>`. Resolve every failure; do not substitute a free-text claim of reading.
+11. Re-run `python scripts/route_synthesis.py <plan.json> --reference-receipt <receipt.json> --output <route.json>`. Require `reference_gate.status=passed` before any analysis handoff. Use the ordinary runner only when `runner_allowed=true`; when `route=specialist_route`, keep the ordinary runner blocked and follow `required_handoff` plus the specialist input contract. A `no_pooling` route never becomes executable.
 
 `assets/reference_routes.json` is the authoritative machine-readable routing table. The following list is its human-readable mirror; never use it to bypass or broaden the routed minimum set:
 
@@ -51,6 +73,8 @@ Treat statistical pooling as optional. Recommend structured narrative synthesis 
 - Read `references/medical-review.md` for medicine, public health, diagnostics, prognosis, prevalence, etiology, harms, or clinical interventions.
 - Read `references/ecology-review.md` for ecology, evolution, conservation, environmental management, biodiversity, exposure-response, or systematic maps.
 - Read `references/effect-size-and-models.md` before calculating, transforming, pooling, or interpreting effect sizes.
+- Read `references/meta-analysis-decision-gates.md` when evidence-synthesis conduct is incomplete, independent clusters are few, an effect conversion is proposed, an old review is being updated, or a methodological claim/tutorial is being audited.
+- Read `references/second-order-meta.md` whenever `data.level=meta_level`, an umbrella/overview is being quantitatively synthesized, or existing Meta-analysis estimates are inputs.
 - Read `references/bias-and-certainty.md` before selecting appraisal tools or rating a body of evidence.
 - Read `references/environmental-reporting.md` for CEE, ROSES, or PRISMA-EcoEvo outputs.
 - Read `references/data-and-reproducibility.md` before building extraction data or using AI in screening, extraction, appraisal, synthesis, or reporting.
@@ -58,10 +82,15 @@ Treat statistical pooling as optional. Recommend structured narrative synthesis 
 - Read `references/complex-design-effects.md` before reconstructing paired, crossover, change-score, BACI, or cluster-adjusted effects.
 - Read `references/specialist-medical-models.md` before running diagnostic, dose-response, or network models.
 - Read `references/ecoevo-structured-models.md` before using phylogenetic, spatial, or temporal correlation structures.
-- Read `references/plant-biodiversity-specialist-routes.md` for plant ecology, biodiversity, restoration, community composition, ecosystem multifunctionality, variability, factorial global-change experiments, longitudinal resistance/recovery, or second-order synthesis.
+- Read `references/plant-biodiversity-specialist-routes.md` for plant ecology, biodiversity, restoration, community composition, ecosystem multifunctionality, variability, factorial global-change experiments, longitudinal resistance/recovery, or plant/biodiversity second-order synthesis.
 - Read `references/plant-biodiversity-benchmark-casebook.md` when designing or auditing a method against the collected Nature, Science-family, Ecology Letters, PNAS, and forest-ecology benchmark studies.
+- Before claiming ecology benchmark coverage, validate `tests/ecology_benchmark_scenarios.json` with `scripts/validate_ecology_benchmarks.py` and run `tests/run_ecology_benchmarks.py`; report conceptual case coverage separately from verified source replications.
+- Read `references/source-reproduction.md` before claiming that a published Meta-analysis has been reproduced. Validate `tests/source_reproduction_cases.json`, verify every external input hash, then run `tests/run_source_reproductions.py`; report exact/targeted reproduction, modern reanalysis, blocked, and NOT_RUN as different outcomes.
+- A source reproduction may count as verified only when its immutable or explicitly versioned source identity, license status, local SHA-256, executable adapter, numerical assertions, tolerance, environment, and frozen output receipt are all recorded and tested. In the declared verification environment require the frozen output hash to match; across a different environment, label a numerical PASS with output drift as `numeric_oracle_only`, never as byte-identical reproduction. Never widen a tolerance to conceal a source–publication conflict.
 - Read `references/quality-control-contracts.md` before reconciling duplicate extraction, linking reports to studies, or validating appraisal records.
 - Read `references/source-registry.md` when checking authority, licensing, versioning, or update frequency of source guidance.
+
+Default companion guidance (not a routed minimum): read `references/problem-driven-analysis.md` for the question-first workflow, analysis modes, reusable problem patterns, and the distinction between a candidate route and a hard stop.
 
 If the machine table and this prose disagree, stop, treat the table or documentation as a defect, and reconcile both with a tested change. Do not silently choose whichever route is more convenient.
 
@@ -96,14 +125,17 @@ If the machine table and this prose disagree, stop, treat the table or documenta
 
 - Match the measure to the outcome, estimand, design, and interpretability. Preserve natural units when clinically or ecologically meaningful.
 - Record every sign reversal, scale harmonization, continuity correction, back-transformation, and variance reconstruction.
+- For cross-measure conversion, declare `unit_conversion`, `ratio_log_transform`, `correlation_bridge`, `response_ratio_to_smd`, or `other`, then complete the conversion fields in `assets/analysis_plan_template.yaml`. Any conversion to or from Pearson `r`, Spearman rho, Kendall tau, partial correlation, phi, or another correlation-family measure is `correlation_bridge`; reserve `other` for a named conversion that fits none of the preceding families. Distinguish exact transformations from assumption-dependent approximations and propagate the full sampling covariance. Unknown or unverifiable assumptions block conversion.
 - Avoid mixing adjusted and unadjusted effects, endpoint and change scores, conditional and marginal effects, or incompatible reference categories without a prespecified rationale.
 - Use `scripts/calculate_effect_sizes.R` only after verifying its input contract and assumptions.
+- For independent-group ecological variability, use explicit `VR` or `CVR` routes only when SDs are positive; `CVR` additionally requires positive means. Declare bias correction and `vtype`, and do not interpret a CV ratio as a stability mechanism without a defensible estimand.
 - Use `scripts/calculate_complex_effects.R` for paired/crossover continuous results, two-group change/BACI contrasts, or already design-adjusted cluster estimates. Require explicit correlation sources and assumption-set IDs; do not manufacture a cluster-adjusted effect from an effective sample size alone.
 - Validate its output with `python scripts/validate_extraction.py <effects.csv> --stage analysis`. Require one declared `analysis_scale` per analysis file and require `vi ~= sei^2` on that scale.
 
 ### 5. Model dependence and heterogeneity
 
 - Define the target of inference before selecting common/fixed-effect, random-effects, multilevel, multivariate, robust-variance, GLMM, dose-response, network, or Bayesian methods.
+- Require a positive `data.independent_cluster_count` for aggregate analysis decisions. There is no universal `k=4` permission rule; sparse evidence triggers the few-study reference route, conservative sensitivity analysis, and weaker interpretation.
 - Require `--independent-cluster-col` for `scripts/run_meta_analysis.R`. Count information, small-study method eligibility, moderator support, and leave-one-out analyses by independent clusters rather than effect rows.
 - Model study, comparison, outcome, time, site, species, taxon, phylogeny, and spatial/temporal dependence where they affect sampling covariance or true-effect structure.
 - When sampling covariance is explicit or can be defensibly approximated, use `scripts/build_sampling_v.R` to construct an audited `V` under stated `rho`/`phi` scenarios; never guess design fields or shared-group weights.
@@ -111,7 +143,8 @@ If the machine table and this prose disagree, stop, treat the table or documenta
 - Treat subgroup analysis and meta-regression as observational comparisons. Limit complexity when the number and distribution of studies do not support the planned moderators.
 - Use `scripts/run_meta_analysis.R --route-contract <route.json> ...` as a conservative baseline, then extend it only with documented justification. The runner independently rejects a missing contract, a specialist/no-pooling route, `runner_allowed=false`, a non-passed reference gate, gate issues, or an invalid plan hash.
 - Keep the ordinary runner blocked for specialist routes. Use `scripts/run_diagnostic_meta.R` only for one threshold per study with study-level 2x2 data; use `scripts/run_dose_response.R` only for a prespecified two-stage linear trend with an explicit sampling covariance matrix; use `scripts/run_network_meta.R` only for a connected contrast network under a consistency model, without treating ranking or inconsistency as solved.
-- Keep the ordinary runner blocked when the estimand must first be generated from a raw community matrix, community-composition distance, multidimensional biodiversity object, variability contrast, factorial interaction, multifunctionality construction, longitudinal resistance/recovery process, derived recovery-debt/stability quantity, or second-order/cross-meta evidence base. Set the matching schema 1.2 trigger; for biodiversity/ecology triggers, validate `assets/biodiversity_contract_template.json` with `scripts/validate_biodiversity_contract.py` and record its path before routing. Do not convert such inputs to generic `yi/vi` merely to make the baseline runner accept them.
+- Keep the ordinary runner blocked when the estimand must first be generated from a raw community matrix, community-composition distance, multidimensional biodiversity object, variability contrast, factorial interaction, multifunctionality construction, longitudinal resistance/recovery process, derived recovery-debt/stability quantity, or second-order/cross-meta evidence base. Set the matching route-schema trigger; for biodiversity/ecology triggers, validate `assets/biodiversity_contract_template.json` with `scripts/validate_biodiversity_contract.py` and record its path before routing. Do not convert such inputs to generic `yi/vi` merely to make the baseline runner accept them.
+- For second-order/cross-meta work, set `data.level=meta_level` and `second_order_meta=true`; map primary-study overlap, align estimands, and choose overview, second-order quantitative synthesis, or primary-study reanalysis. Never treat pooled review estimates as automatically independent or multiply inverse-variance weights by quality scores.
 - Shared controls alone do not require a new specialist route when the target effects are already defined: declare dependent effects, construct and audit the sampling `V`, identify independent clusters, and use a defensible multilevel/multivariate model or robust sensitivity analysis. Escalate multidimensional outcomes or unidentified covariance rather than duplicating the control as independent information.
 - For ecological structured dependence, validate every matrix with `scripts/validate_structure_matrix.py`. Use `scripts/run_ecoevo_meta_analysis.R` only for its implemented phylogenetic-correlation contract. Spatial and temporal matrices are validation-only in P1: stop after validation and obtain a specialist model instead of claiming a fitted result. Do not repair matrices silently, infer IDs by position, or fit separable phylogenetic/study/species components when the data cannot identify them.
 

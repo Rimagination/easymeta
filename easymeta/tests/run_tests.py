@@ -513,6 +513,9 @@ def test_logit_scale(work: Path) -> None:
 def route_payload() -> dict[str, Any]:
     payload = json.loads((SKILL_ROOT / "assets" / "synthesis_route_template.json").read_text(encoding="utf-8"))
     payload["task"]["as_of_date"] = "2026-08-03"
+    payload["task"]["stage"] = "analysis"
+    payload["task"]["decision_points"] = ["effect_size", "synthesis_model", "r_implementation"]
+    payload["data"]["independent_cluster_count"] = 12
     return payload
 
 
@@ -574,6 +577,7 @@ def test_router() -> None:
     if pending["reference_gate"]["status"] != "pending":
         raise TestFailure(f"unexpected pending reference gate: {pending}")
     expected_health_refs = {
+        "references/evidence-synthesis-core.md",
         "references/medical-review.md",
         "references/effect-size-and-models.md",
         "references/r-metafor-workflows.md",
@@ -585,6 +589,112 @@ def test_router() -> None:
         raise TestFailure(f"valid receipt did not release aggregate route: {aggregate}")
     if aggregate["reference_gate"]["status"] != "passed" or aggregate["stop_reason"] is not None:
         raise TestFailure(f"passed reference gate retained a stop condition: {aggregate}")
+
+    missing_cluster_count = route_payload()
+    missing_cluster_count["data"]["independent_cluster_count"] = None
+    invalid_count = invoke_route(missing_cluster_count, expected=1)
+    if not any(
+        issue.get("field") == "data.independent_cluster_count"
+        for issue in invalid_count.get("issues", [])
+    ):
+        raise TestFailure("aggregate analysis could omit the independent-cluster count")
+
+    sparse_payload = route_payload()
+    sparse_payload["data"]["independent_cluster_count"] = 4
+    sparse = invoke_route(sparse_payload)
+    if "decision.few_studies" not in sparse["matched_reference_rules"]:
+        raise TestFailure("four independent clusters did not trigger the few-study gate")
+    if "references/meta-analysis-decision-gates.md" not in sparse["required_references"]:
+        raise TestFailure("few-study gate omitted the decision-gates reference")
+    if "COCHRANE-HB-6.5" not in sparse["required_source_ids"]:
+        raise TestFailure("few-study gate omitted current Cochrane methods guidance")
+
+    small_study_payload = route_payload()
+    small_study_payload["task"]["decision_points"].append("small_study_effects")
+    small_study = invoke_route(small_study_payload)
+    if "COCHRANE-MISSING-13" not in small_study["required_source_ids"]:
+        raise TestFailure("small-study-effect analysis omitted Cochrane Chapter 13")
+
+    conversion_payload = route_payload()
+    conversion_payload["task"]["decision_points"] = ["effect_conversion"]
+    conversion_payload["task"]["conversion_family"] = "ratio_log_transform"
+    conversion = invoke_route(conversion_payload)
+    if "EFFECT-CONVERSION-2026" in conversion["required_source_ids"]:
+        raise TestFailure("ordinary medical conversion loaded an ecology response-ratio source")
+    if "METAFOR-DOCS" in conversion["required_source_ids"]:
+        raise TestFailure("conversion without R implementation loaded software documentation")
+
+    correlation_payload = route_payload()
+    correlation_payload["task"]["decision_points"] = ["effect_conversion"]
+    correlation_payload["task"]["conversion_family"] = "correlation_bridge"
+    correlation = invoke_route(correlation_payload)
+    if "decision.effect_conversion" not in correlation["matched_reference_rules"]:
+        raise TestFailure("correlation bridge did not activate the generic conversion decision gate")
+    if "EFFECT-CONVERSION-2026" in correlation["required_source_ids"]:
+        raise TestFailure("correlation bridge incorrectly loaded an ecology response-ratio conversion source")
+
+    ecology_conversion_payload = route_payload()
+    ecology_conversion_payload["task"]["domain"] = "ecology"
+    ecology_conversion_payload["task"]["decision_points"] = ["effect_conversion"]
+    ecology_conversion_payload["task"]["conversion_family"] = "response_ratio_to_smd"
+    ecology_conversion = invoke_route(ecology_conversion_payload)
+    if "EFFECT-CONVERSION-2026" not in ecology_conversion["required_source_ids"]:
+        raise TestFailure("ecology response-ratio conversion omitted its specific source")
+
+    update_payload = route_payload()
+    update_payload["task"]["decision_points"].append("review_update")
+    update = invoke_route(update_payload)
+    if "COCHRANE-UPDATE-6.5" not in update["required_source_ids"]:
+        raise TestFailure("review update did not route to Cochrane updating guidance")
+
+    ecology_update_payload = route_payload()
+    ecology_update_payload["task"]["domain"] = "ecology"
+    ecology_update_payload["task"]["decision_points"].append("review_update")
+    ecology_update = invoke_route(ecology_update_payload)
+    if not {"CEE-STD-5.1", "CEE-METHODS-5.1"}.issubset(ecology_update["required_source_ids"]):
+        raise TestFailure("ecology review update omitted CEE conduct sources")
+    if "COCHRANE-UPDATE-6.5" in ecology_update["required_source_ids"]:
+        raise TestFailure("ecology review update loaded health-only update guidance")
+
+    audit_payload = route_payload()
+    audit_payload["task"]["stage"] = "audit"
+    audit_payload["task"]["decision_points"] = ["method_claim_audit"]
+    audit_payload["task"]["audit_targets"] = ["effect_model", "software"]
+    audit = invoke_route(audit_payload)
+    if not {"INTRO-META-2E", "METAFOR-DOCS"}.issubset(audit["required_source_ids"]):
+        raise TestFailure("effect-model/software audit omitted method or software sources")
+    if "references/environmental-reporting.md" in audit["required_references"]:
+        raise TestFailure("effect-model/software audit loaded unrelated environmental reporting guidance")
+
+    empty_audit_targets = route_payload()
+    empty_audit_targets["task"]["stage"] = "audit"
+    empty_audit_targets["task"]["decision_points"] = ["method_claim_audit"]
+    invalid_audit = invoke_route(empty_audit_targets, expected=1)
+    if not any(issue.get("field") == "task.audit_targets" for issue in invalid_audit.get("issues", [])):
+        raise TestFailure("audit work could omit its audit target")
+
+    environment_reporting_audit = route_payload()
+    environment_reporting_audit["task"]["product_type"] = "audit"
+    environment_reporting_audit["task"]["domain"] = "environmental_science"
+    environment_reporting_audit["task"]["stage"] = "audit"
+    environment_reporting_audit["task"]["decision_points"] = ["method_claim_audit"]
+    environment_reporting_audit["task"]["audit_targets"] = ["reporting"]
+    environment_reporting_audit["data"]["independent_cluster_count"] = None
+    reporting_audit = invoke_route(environment_reporting_audit)
+    if "references/environmental-reporting.md" not in reporting_audit["required_references"]:
+        raise TestFailure("environment reporting audit omitted its reporting reference")
+    if not {"ROSES", "PRISMA-ECOEVO-1.0"}.issubset(reporting_audit["required_source_ids"]):
+        raise TestFailure("environment reporting audit omitted ROSES or PRISMA-EcoEvo")
+
+    appraisal_audit = route_payload()
+    appraisal_audit["task"]["product_type"] = "audit"
+    appraisal_audit["task"]["stage"] = "audit"
+    appraisal_audit["task"]["decision_points"] = ["method_claim_audit"]
+    appraisal_audit["task"]["audit_targets"] = ["appraisal"]
+    appraisal_audit["data"]["independent_cluster_count"] = None
+    appraisal = invoke_route(appraisal_audit)
+    if "QUALITY-SCORE-1999" not in appraisal["required_source_ids"]:
+        raise TestFailure("appraisal audit omitted the quality-score hazard source")
 
     dependent_payload = route_payload()
     dependent_payload["data"]["effect_structure"] = "dependent"
@@ -617,6 +727,19 @@ def test_router() -> None:
         raise TestFailure("diagnostic route omitted Cochrane DTA or QUADAS-3")
     if "references/ecology-review.md" in diagnostic["required_references"]:
         raise TestFailure("diagnostic route loaded an unrelated ecology reference")
+
+    second_order_health_payload = route_payload()
+    second_order_health_payload["task"]["product_type"] = "umbrella_review"
+    second_order_health_payload["data"]["level"] = "meta_level"
+    second_order_health_payload["data"]["independent_cluster_count"] = None
+    second_order_health_payload["specialist_triggers"]["second_order_meta"] = True
+    second_order_health = invoke_route(second_order_health_payload)
+    if second_order_health["required_handoff"] != ["second_order_evidence_synthesis_specialist"]:
+        raise TestFailure("medical second-order input was not routed to the specialist")
+    if "references/second-order-meta.md" not in second_order_health["required_references"]:
+        raise TestFailure("medical second-order route omitted its generic guidance")
+    if "references/plant-biodiversity-specialist-routes.md" in second_order_health["required_references"]:
+        raise TestFailure("medical second-order route loaded plant-biodiversity guidance")
 
     missing_v_payload = route_payload()
     missing_v_payload["data"]["effect_structure"] = "dependent"
@@ -665,6 +788,7 @@ def test_router() -> None:
             "variability_effect",
             "factorial_interaction",
             "ecosystem_multifunctionality",
+            "one_stage_longitudinal",
             "derived_recovery_stability",
         }:
             ecology_payload["data"]["ecology_contract_path"] = "contracts/ecology-outcome.json"
@@ -685,6 +809,12 @@ def test_router() -> None:
                 raise TestFailure("raw community data loaded an unrelated medical reference")
             if "references/r-metafor-workflows.md" in ecology_route["required_references"]:
                 raise TestFailure("raw community data loaded the ordinary yi/vi R workflow before estimand generation")
+
+    medical_longitudinal = route_payload()
+    medical_longitudinal["specialist_triggers"]["one_stage_longitudinal"] = True
+    medical_longitudinal_route = invoke_route(medical_longitudinal)
+    if medical_longitudinal_route["required_handoff"] != ["one_stage_longitudinal_model_specialist"]:
+        raise TestFailure("medical longitudinal route was incorrectly made ecology-specific")
 
     raw_level_without_trigger = route_payload()
     raw_level_without_trigger["data"]["level"] = "raw_community_matrix"

@@ -5,6 +5,7 @@
 ## 目录
 
 - [使用方法](#使用方法)
+- [机器验收现状](#机器验收现状)
 - [能力覆盖矩阵](#能力覆盖矩阵)
 - [个案契约](#个案契约)
 - [验收层级](#验收层级)
@@ -18,12 +19,23 @@
 5. 保存数据/代码版本、获取日期、许可证、校验和、运行环境和与原结果的差异。
 6. 通过条件是方法契约和失败防护正确，不是必须复现相同显著性。
 
+## 机器验收现状
+
+`tests/ecology_benchmark_scenarios.json` 将首批 8 个案例族落实为 24 个机器场景，每族至少一个正向和两个拒绝案例。运行：
+
+```text
+python scripts/validate_ecology_benchmarks.py tests/ecology_benchmark_scenarios.json
+python tests/run_ecology_benchmarks.py
+```
+
+当前 24 个场景均是 `synthetic` 的 `conceptual_reimplementation` 或 `router_rejection`：它们检验 CVR 数值、共享对照路由、原始生物多样性契约、析因交互、多功能性、纵向恢复、系统发育矩阵和二阶综合停止规则，但该合成套件内部的 `verified_source_replications=0` 必须原样报告。论文数据的来源复现另由 `tests/source_reproduction_cases.json` 管理；截至 2026-08-05，该独立清单有 Cheng 2024、Gonçalves-Souza 2025 与 Keck 2025 三个 `verified targeted_reproduction`，Atkinson 2022 因公开 v1 与论文 oracle 冲突而 `blocked`。两套计数不得相加后伪装成“28 篇复现”。
+
 ## 能力覆盖矩阵
 
-| ID | 研究类型 | 首要能力门 | 默认测试类型 |
+| ID | 研究类型 | 首要能力门 | 当前能力形态 |
 |---|---|---|---|
 | `BENCH-CHEN-2025` | 已有 Nature 锚点 | 保持既有端到端基线 | regression anchor |
-| `BENCH-KECK-2025` | Nature 全球人类压力综合 | α 与 composition/homogeneity 分流、空间配对依赖 | modern audit |
+| `BENCH-KECK-2025` | Nature 全球人类压力综合 | α 与 composition/homogeneity 分流、空间配对依赖 | targeted reproduction + modern audit |
 | `BENCH-SHAW-2025` | Nature 全球遗传多样性 Meta | 时间/指标桥接、多层依赖、因果语言 | modern audit |
 | `BENCH-CHENG-2024` | 正式多层 Meta | 共享对照 `V`、差分效应 | conceptual + numerical |
 | `BENCH-LI-2025` | 多维 β 多样性 Meta | 多变量、嵌套、RVE | specialist route |
@@ -59,6 +71,7 @@
 - 依赖与尺度：composition/homogeneity 来自站点间距离，pairwise distances 不是独立样本；压力、类群、研究类型与 spatial scale 共同影响外推。预计算距离效应仍必须触发 `community_composition`。
 - 能力门：契约强制 component/dimension/metric、grain/extent、距离定义、站点布局、独立 study 和抽样协方差状态；现代审计比较加权与非加权、研究内异质性和 residual small-study-effect 路线。
 - 红旗：原文平均每研究效应数较少不能证明研究内依赖可忽略；非加权混合模型不是生态 Meta 默认；funnel、fail-safe 或 P-curve 不能共同升级为“无发表偏倚”证明。
+- 来源复现状态：`verified targeted_reproduction`。冻结 Zenodo `14608770` v1.0、Git commit `5acdbde`、release SHA-256 `63ee7b...e0d8`，从 `data/data.json` 执行 `PBL_stats.R` 的三个全局截距模型；3,667 个比较、2,133 篇文章和 22 项计数/估计/区间/收敛/Hessian oracle 全部通过。没有 lockfile/container，论文与仓库的 R 版本记录不一致，所以整篇和原环境 exact reproduction 仍为 `HOLD`。
 
 ### BENCH-SHAW-2025：全球遗传多样性变化
 
@@ -112,6 +125,7 @@
 - 依赖与模型：四个析因单元、共享实验/区组、多个功能和时间点。
 - 能力门：必须触发 `factorial_interaction`；把 `ΔNBE` 视为所选效应尺度上的交互/差分，传播相关效应之差的方差。只有获得四个原始析因单元时才使用通用四单元对比公式。
 - 红旗：联合处理相对对照显著就称“协同”；遗漏一个析因单元仍构造正式交互。
+- 来源复现状态：`HOLD/NOT_RUN`。Figshare v1 只有图 2–5 的结果/绘图表，没有论文核心 1997 个 NBE、469 个 BE slope、抽样方差或分析代码；可核对 `-0.222` 等结果表身份，但不能重新拟合核心模型。正文把 `e^0.360` 解释为增加 61%，而按其定义应约为 43.3%，该冲突必须保留。
 
 ### BENCH-CROUZEILLES-2016：森林恢复、空间尺度与 bootstrap
 
@@ -221,3 +235,5 @@
 - `L4 computation`：在冻结输入上结果与公开实现相容，或差异有可重复解释。
 - `L5 robustness`：替代相关、效应定义、尺度、参考状态、偏倚风险和模型均有敏感性分析。
 - `L6 interpretation`：结论不超出设计、时间、空间、分类群和观测支持。
+
+合成 fixture 可以通过相应的 L1–L4 方法合同，但不能自动通过 L0 的论文源完整性，也不能替代 L6 的领域专家判断。`exact_reproduction` 和 `modern_reanalysis` 只有在来源版本、许可、输入 SHA-256、运行环境、逐项数值容差和差异说明均冻结后才能标为通过；缺失公开或授权输入时状态必须是 `NOT_RUN/pending`，不能算作 PASS。
